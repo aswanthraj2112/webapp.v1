@@ -13,7 +13,7 @@ const resolveFromRoot = (maybeRelative) =>
     ? maybeRelative
     : path.resolve(rootDir, maybeRelative);
 
-const defaultOrigin = 'http://localhost:5173';
+const defaultOrigin = 'http://localhost:3000';
 const rawOrigins = process.env.CLIENT_ORIGINS || process.env.CLIENT_ORIGIN;
 
 const parsedOrigins = rawOrigins
