@@ -167,15 +167,26 @@ export async function handleUpload (userId, file) {
 
     await generateThumbnail(absolutePath, thumbAbsolute);
 
-    const originalUpload = await saveOriginalToS3(absolutePath, `${keyBase}${ext}`, file.mimetype);
-    const thumbUpload = await saveThumbToS3(thumbAbsolute, thumbFile);
+    let storedFilename, thumbPath;
+    
+    if (config.USE_LOCAL_STORAGE) {
+      // Use local storage for development
+      storedFilename = file.filename;
+      thumbPath = thumbFile;
+    } else {
+      // Use S3 for production
+      const originalUpload = await saveOriginalToS3(absolutePath, `${keyBase}${ext}`, file.mimetype);
+      const thumbUpload = await saveThumbToS3(thumbAbsolute, thumbFile);
+      storedFilename = originalUpload.key;
+      thumbPath = thumbUpload.key;
+    }
 
     const now = new Date().toISOString();
     const created = await repoCreateVideo({
       id: keyBase,
       userId: String(userId),
       originalName: file.originalname,
-      storedFilename: originalUpload.key,
+      storedFilename,
       format,
       durationSec: duration,
       status: 'uploaded',
@@ -184,7 +195,7 @@ export async function handleUpload (userId, file) {
       sizeBytes: file.size,
       createdAt: now,
       updatedAt: now,
-      thumbPath: thumbUpload.key,
+      thumbPath,
       transcodedFilename: null
     });
 
@@ -192,7 +203,7 @@ export async function handleUpload (userId, file) {
   } catch (error) {
     console.error('Upload processing failed', error);
     await fs.unlink(absolutePath).catch(() => {});
-    if (thumbAbsolute) {
+    if (thumbAbsolute && !config.USE_LOCAL_STORAGE) {
       await fs.unlink(thumbAbsolute).catch(() => {});
     }
     throw new AppError('Unable to process uploaded video', 500, 'UPLOAD_PROCESSING_FAILED');
@@ -233,6 +244,13 @@ export async function getVideoStreamUrl (video, variant = 'original', download =
   if (!key) {
     throw new NotFoundError('Video file missing on storage');
   }
+  
+  if (config.USE_LOCAL_STORAGE) {
+    // For local storage, return the local file path
+    const filename = useTranscoded ? video.transcodedFilename : video.storedFilename;
+    return `/static/videos/${filename}`;
+  }
+  
   const downloadName = download ? buildDownloadName(video, variant) : undefined;
   return presignS3Url(key, { downloadName });
 }
@@ -241,15 +259,36 @@ export async function getThumbnailUrl (video) {
   if (!video.thumbPath) {
     throw new NotFoundError('Thumbnail not generated yet');
   }
+  
+  if (config.USE_LOCAL_STORAGE) {
+    // For local storage, return the local file path
+    return `/static/thumbs/${video.thumbPath}`;
+  }
+  
   return presignS3Url(video.thumbPath);
 }
 
 export async function deleteVideo (video) {
-  await deleteFromS3([
-    video.storedFilename,
-    video.thumbPath,
-    video.transcodedFilename
-  ]);
+  if (config.USE_LOCAL_STORAGE) {
+    // Delete local files
+    const filesToDelete = [
+      video.storedFilename ? path.join(config.PUBLIC_VIDEOS_DIR, video.storedFilename) : null,
+      video.thumbPath ? path.join(config.PUBLIC_THUMBS_DIR, video.thumbPath) : null,
+      video.transcodedFilename ? path.join(config.PUBLIC_VIDEOS_DIR, video.transcodedFilename) : null
+    ].filter(Boolean);
+    
+    await Promise.all(filesToDelete.map(filePath => 
+      fs.unlink(filePath).catch(() => {}) // Ignore errors if file doesn't exist
+    ));
+  } else {
+    // Delete from S3
+    await deleteFromS3([
+      video.storedFilename,
+      video.thumbPath,
+      video.transcodedFilename
+    ]);
+  }
+  
   await repoDeleteVideo(String(video.userId), video.id);
 }
 
@@ -268,24 +307,34 @@ export async function transcodeVideo (video, preset = '720p') {
   const tmpDir = path.join(config.PUBLIC_VIDEOS_DIR, 'tmp');
   await fs.mkdir(tmpDir, { recursive: true });
 
-  const originalExt = path.extname(video.storedFilename) || '.mp4';
-  const baseName = await getKeyBaseFromOriginal(video.storedFilename);
-  const localOriginal = path.join(tmpDir, `${baseName}-original${originalExt}`);
-  const localOutput = path.join(tmpDir, `${baseName}-${preset}.mp4`);
+  let localOriginal, localOutput, outputFilename;
 
-  try {
-    await downloadFromS3(video.storedFilename, localOriginal);
-  } catch (error) {
-    console.error('Failed to download original for transcoding', error);
-    await repoUpdateVideo(ownerId, video.id, { status: 'failed' });
-    throw new NotFoundError('Original video file missing from storage');
+  if (config.USE_LOCAL_STORAGE) {
+    // For local storage, use the files directly
+    localOriginal = path.join(config.PUBLIC_VIDEOS_DIR, video.storedFilename);
+    const baseName = path.parse(video.storedFilename).name;
+    outputFilename = `${baseName}-${preset}.mp4`;
+    localOutput = path.join(config.PUBLIC_VIDEOS_DIR, outputFilename);
+  } else {
+    // For S3 storage, download to temp directory
+    const originalExt = path.extname(video.storedFilename) || '.mp4';
+    const baseName = await getKeyBaseFromOriginal(video.storedFilename);
+    localOriginal = path.join(tmpDir, `${baseName}-original${originalExt}`);
+    localOutput = path.join(tmpDir, `${baseName}-${preset}.mp4`);
+    
+    try {
+      await downloadFromS3(video.storedFilename, localOriginal);
+    } catch (error) {
+      console.error('Failed to download original for transcoding', error);
+      await repoUpdateVideo(ownerId, video.id, { status: 'failed' });
+      throw new NotFoundError('Original video file missing from storage');
+    }
   }
 
+  // Clean up any existing output file
   await fs.unlink(localOutput).catch(() => {});
 
   console.log(`Starting ffmpeg transcode for video ${video.id}`);
-
-  const outputKeyName = `${baseName}-${preset}.mp4`;
 
   try {
     await new Promise((resolve, reject) => {
@@ -305,10 +354,20 @@ export async function transcodeVideo (video, preset = '720p') {
         .save(localOutput);
     });
 
-    const upload = await saveTranscodedToS3(localOutput, outputKeyName);
+    let transcodedFilename;
+    if (config.USE_LOCAL_STORAGE) {
+      // For local storage, the file is already in the right place
+      transcodedFilename = outputFilename;
+    } else {
+      // For S3 storage, upload the transcoded file
+      const outputKeyName = `${await getKeyBaseFromOriginal(video.storedFilename)}-${preset}.mp4`;
+      const upload = await saveTranscodedToS3(localOutput, outputKeyName);
+      transcodedFilename = upload.key;
+    }
+
     await repoUpdateVideo(ownerId, video.id, {
       status: 'ready',
-      transcodedFilename: upload.key,
+      transcodedFilename,
       updatedAt: new Date().toISOString()
     });
   } catch (error) {
@@ -317,7 +376,10 @@ export async function transcodeVideo (video, preset = '720p') {
     await repoUpdateVideo(ownerId, video.id, { status: 'failed' });
     throw new AppError('Transcoding failed', 500, 'TRANSCODE_FAILED');
   } finally {
-    await fs.unlink(localOriginal).catch(() => {});
-    await fs.unlink(localOutput).catch(() => {});
+    // Clean up temp files (only for S3 mode)
+    if (!config.USE_LOCAL_STORAGE) {
+      await fs.unlink(localOriginal).catch(() => {});
+      await fs.unlink(localOutput).catch(() => {});
+    }
   }
 }

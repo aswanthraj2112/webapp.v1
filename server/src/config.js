@@ -20,7 +20,8 @@ const config = {
   DB_FILE: resolveFromRoot(process.env.DB_FILE || './data.sqlite'),
   PUBLIC_DIR: resolveFromRoot(process.env.PUBLIC_DIR || './src/public'),
   CLIENT_ORIGIN: process.env.CLIENT_ORIGIN || 'http://localhost:5173',
-  LIMIT_FILE_SIZE_MB: Number.parseInt(process.env.LIMIT_FILE_SIZE_MB || '512', 10)
+  LIMIT_FILE_SIZE_MB: Number.parseInt(process.env.LIMIT_FILE_SIZE_MB || '512', 10),
+  USE_LOCAL_STORAGE: process.env.USE_LOCAL_STORAGE === 'true'
 };
 
 config.PUBLIC_VIDEOS_DIR = path.join(config.PUBLIC_DIR, 'videos');

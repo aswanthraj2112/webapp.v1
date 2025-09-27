@@ -15,6 +15,12 @@ app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Serve static files for local development
+if (config.USE_LOCAL_STORAGE) {
+  app.use('/static/videos', express.static(config.PUBLIC_VIDEOS_DIR));
+  app.use('/static/thumbs', express.static(config.PUBLIC_THUMBS_DIR));
+}
+
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });
 });

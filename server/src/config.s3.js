@@ -14,6 +14,15 @@ async function getParam (Name) {
   return Parameter.Value;
 }
 
+async function getParamWithDefault(name, defaultValue) {
+  try {
+    return await getParam(name);
+  } catch (error) {
+    console.warn(`Parameter ${name} not found, using default: ${defaultValue}`);
+    return defaultValue;
+  }
+}
+
 export async function loadS3Config () {
   if (!configPromise) {
     configPromise = (async () => ({
@@ -23,7 +32,7 @@ export async function loadS3Config () {
       TRANSCODED_PREFIX: await getParam('/n11817143/app/s3_transcoded_prefix'),
       THUMB_PREFIX: await getParam('/n11817143/app/s3_thumbnail_prefix'),
       PRESIGNED_TTL_SECONDS: Number.parseInt(
-        await getParam('/n11817143/app/presigned_ttl_seconds'), 10
+        await getParamWithDefault('/n11817143/app/presigned_ttl_seconds', '3600'), 10
       )
     }))();
   }
