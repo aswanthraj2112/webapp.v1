@@ -13,15 +13,31 @@ const resolveFromRoot = (maybeRelative) =>
     ? maybeRelative
     : path.resolve(rootDir, maybeRelative);
 
+const defaultOrigin = 'http://localhost:5173';
+const rawOrigins = process.env.CLIENT_ORIGINS || process.env.CLIENT_ORIGIN;
+
+const parsedOrigins = rawOrigins
+  ? rawOrigins
+      .split(',')
+      .map((value) => value.trim())
+      .filter(Boolean)
+  : [];
+
+if (parsedOrigins.length === 0) {
+  parsedOrigins.push(defaultOrigin);
+}
+
 const config = {
-  PORT: Number.parseInt(process.env.PORT || '4000', 10),
+  PORT: Number.parseInt(process.env.PORT || '8080', 10),
   JWT_SECRET: process.env.JWT_SECRET || 'change_me',
   TOKEN_EXPIRY: process.env.TOKEN_EXPIRY || '1h',
   DB_FILE: resolveFromRoot(process.env.DB_FILE || './data.sqlite'),
   PUBLIC_DIR: resolveFromRoot(process.env.PUBLIC_DIR || './src/public'),
-  CLIENT_ORIGIN: process.env.CLIENT_ORIGIN || 'http://localhost:5173',
+  CLIENT_ORIGINS: parsedOrigins,
   LIMIT_FILE_SIZE_MB: Number.parseInt(process.env.LIMIT_FILE_SIZE_MB || '512', 10)
 };
+
+config.CLIENT_ORIGIN = config.CLIENT_ORIGINS[0];
 
 config.PUBLIC_VIDEOS_DIR = path.join(config.PUBLIC_DIR, 'videos');
 config.PUBLIC_THUMBS_DIR = path.join(config.PUBLIC_DIR, 'thumbs');
