@@ -7,7 +7,8 @@ services:
       - AWS_REGION=ap-southeast-2
       - CLIENT_ORIGINS=http://n11817143-videoapp.cab432.com:3000
       - JWT_SECRET=change_me_in_production
-      - USE_LOCAL_STORAGE=true
+      - USE_DYNAMO=true
+      - USE_LOCAL_STORAGE=false
       - LIMIT_FILE_SIZE_MB=512
     volumes:
       - ./server/data:/app/data

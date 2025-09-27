@@ -26,6 +26,19 @@ if (config.USE_LOCAL_STORAGE) {
   app.use('/static/thumbs', express.static(config.PUBLIC_THUMBS_DIR));
 }
 
+app.get('/', (req, res) => {
+  res.json({
+    message: 'Video Web Application API',
+    version: '1.0.0',
+    status: 'running',
+    endpoints: {
+      health: '/api/health',
+      auth: '/api/auth',
+      videos: '/api/videos'
+    }
+  });
+});
+
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });
 });

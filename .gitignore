@@ -1,12 +1,49 @@
-node_modules
-pnpm-lock.yaml
-yarn.lock
-dist
+# Logs
+*.log
+logs/
+app.log
+frontend.log
+server.log
+
+# Dependencies
+node_modules/
+package-lock.json
+
+# Build outputs
+dist/
+build/
+
+# Environment files
 .env
-server/.env
-client/.env
-server/data.sqlite
+.env.local
+.env.production
+
+# Database
+*.sqlite
+*.db
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Archives
+*.tar
+*.zip
+*.gz
+
+# Docker
+.dockerignore
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
 .DS_Store
-npm-debug.log*
-.idea
-.vscode
+Thumbs.db
+
+# Video uploads (temporary)
+server/src/public/videos/tmp/
