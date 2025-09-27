@@ -5,7 +5,9 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 3000,
-    host: true, // Allow external connections
-    open: true
+    host: '0.0.0.0', // Allow external connections
+    open: false,
+    cors: true,
+    origin: 'http://n11817143-videoapp.cab432.com:3000'
   }
 });

@@ -1,0 +1,150 @@
+nohup: ignoring input
+
+> video-webapp@1.0.0 dev
+> concurrently -n server,client -c blue,green "npm --prefix server run dev" "npm --prefix client run dev"
+
+[server] 
+[server] > video-webapp-server@1.0.0 dev
+[server] > nodemon src/index.js
+[server] 
+[client] 
+[client] > video-webapp-client@1.0.0 dev
+[client] > vite
+[client] 
+[server] [33m[nodemon] 3.1.10[39m
+[server] [33m[nodemon] to restart at any time, enter `rs`[39m
+[server] [33m[nodemon] watching path(s): *.*[39m
+[server] [33m[nodemon] watching extensions: js,mjs,cjs,json[39m
+[server] [32m[nodemon] starting `node src/index.js`[39m
+[client] 
+[client]   VITE v5.4.20  ready in 606 ms
+[client] 
+[client]   ➜  Local:   http://localhost:3000/
+[client]   ➜  Network: http://172.31.106.248:3000/
+[server] Server listening on http://0.0.0.0:8080
+[server] Available at: http://n11817143-videoapp.cab432.com
+[server] [0mGET /api/health [32m200[0m 2.702 ms - 15[0m
+[server] [0mGET /api/health [32m200[0m 0.577 ms - 15[0m
+[server] [0mGET /api/auth/me [33m401[0m 1.060 ms - 82[0m
+[server] [0mGET /api/videos [33m401[0m 0.655 ms - 82[0m
+[server] [0mGET /api/health [32m200[0m 0.587 ms - 15[0m
+[server] [0mHEAD /api/health [32m200[0m 0.552 ms - 15[0m
+[server] [0mGET /api/auth/me [33m401[0m 0.820 ms - 82[0m
+[server] [0mGET /api/videos [33m401[0m 0.843 ms - 82[0m
+[server] [0mPOST /api/auth/register [32m201[0m 87.128 ms - 39[0m
+[server] [0mPOST /api/auth/login [32m200[0m 69.688 ms - 218[0m
+[server] [0mGET /api/videos [32m200[0m 4.092 ms - 42[0m
+[server] [32m[nodemon] restarting due to changes...[39m
+[server] [32m[nodemon] starting `node src/index.js`[39m
+[server] Server listening on http://0.0.0.0:8080
+[server] Available at: http://n11817143-videoapp.cab432.com
+[server] [32m[nodemon] restarting due to changes...[39m
+[server] [32m[nodemon] starting `node src/index.js`[39m
+[server] Server listening on http://0.0.0.0:8080
+[server] Available at: http://n11817143-videoapp.cab432.com
+[client] 8:59:16 PM [vite] page reload index.html
+[server] [0mPOST /api/auth/login [32m200[0m 79.054 ms - 218[0m
+[server] [0mGET /api/videos?page=1&limit=6 [32m200[0m 4.655 ms - 562[0m
+[server] [0mGET /api/auth/me [32m200[0m 0.957 ms - 39[0m
+[server] [0mGET /api/videos?page=1&limit=6 [36m304[0m 1.929 ms - -[0m
+[server] [0mGET /api/videos/23ebacd1-6b6c-4bea-86d2-6227df10fc0d/thumbnail?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsInVzZXJuYW1lIjoidXNlcm5hbWUiLCJpYXQiOjE3NTkwMDY3NjQsImV4cCI6MTc1OTAxMDM2NH0.4N7zvZlBGv_kG3rbCjyKV29Y7P7GDwVyiDfbvEDRqLg [36m302[0m 3.410 ms - 105[0m
+[server] [0mGET /static/thumbs/s3://n11817143-a2/thumbnails23ebacd1-6b6c-4bea-86d2-6227df10fc0d.jpg [33m404[0m 1.900 ms - 58[0m
+[server] [0mGET /api/auth/me [36m304[0m 0.928 ms - -[0m
+[server] [0mGET /api/auth/me [36m304[0m 0.892 ms - -[0m
+[server] [0mGET /api/videos?page=1&limit=6 [36m304[0m 2.118 ms - -[0m
+[server] [0mGET /api/videos?page=1&limit=6 [36m304[0m 1.884 ms - -[0m
+[server] [0mGET /api/videos/23ebacd1-6b6c-4bea-86d2-6227df10fc0d/thumbnail?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsInVzZXJuYW1lIjoidXNlcm5hbWUiLCJpYXQiOjE3NTkwMDY3NjQsImV4cCI6MTc1OTAxMDM2NH0.4N7zvZlBGv_kG3rbCjyKV29Y7P7GDwVyiDfbvEDRqLg [36m302[0m 1.861 ms - 105[0m
+[server] [0mGET /static/thumbs/s3://n11817143-a2/thumbnails23ebacd1-6b6c-4bea-86d2-6227df10fc0d.jpg [33m404[0m 0.742 ms - 58[0m
+[server] [0mGET /api/videos/23ebacd1-6b6c-4bea-86d2-6227df10fc0d/stream?variant=original&token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsInVzZXJuYW1lIjoidXNlcm5hbWUiLCJpYXQiOjE3NTkwMDY3NjQsImV4cCI6MTc1OTAxMDM2NH0.4N7zvZlBGv_kG3rbCjyKV29Y7P7GDwVyiDfbvEDRqLg [36m302[0m 1.434 ms - 99[0m
+[server] [0mGET /static/videos/s3://n11817143-a2/raw/23ebacd1-6b6c-4bea-86d2-6227df10fc0d.mp4 [33m404[0m 0.652 ms - 58[0m
+[client] 8:59:36 PM [vite] page reload index.html
+[server] [0mGET /api/auth/me [36m304[0m 0.648 ms - -[0m
+[server] [0mGET /api/auth/me [36m304[0m 0.662 ms - -[0m
+[server] [0mGET /api/videos?page=1&limit=6 [36m304[0m 1.996 ms - -[0m
+[server] [0mGET /api/videos?page=1&limit=6 [36m304[0m 1.550 ms - -[0m
+[server] [0mGET /api/videos/23ebacd1-6b6c-4bea-86d2-6227df10fc0d/thumbnail?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsInVzZXJuYW1lIjoidXNlcm5hbWUiLCJpYXQiOjE3NTkwMDY3NjQsImV4cCI6MTc1OTAxMDM2NH0.4N7zvZlBGv_kG3rbCjyKV29Y7P7GDwVyiDfbvEDRqLg [36m302[0m 1.232 ms - 105[0m
+[server] [0mGET /static/thumbs/s3://n11817143-a2/thumbnails23ebacd1-6b6c-4bea-86d2-6227df10fc0d.jpg [33m404[0m 0.608 ms - 58[0m
+[server] [0mGET /api/auth/me [36m304[0m 0.613 ms - -[0m
+[server] [0mGET /api/auth/me [36m304[0m 0.603 ms - -[0m
+[server] [0mGET /api/videos?page=1&limit=6 [36m304[0m 1.981 ms - -[0m
+[server] [0mGET /api/videos?page=1&limit=6 [36m304[0m 1.463 ms - -[0m
+[server] [0mGET /api/videos/23ebacd1-6b6c-4bea-86d2-6227df10fc0d/thumbnail?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsInVzZXJuYW1lIjoidXNlcm5hbWUiLCJpYXQiOjE3NTkwMDY3NjQsImV4cCI6MTc1OTAxMDM2NH0.4N7zvZlBGv_kG3rbCjyKV29Y7P7GDwVyiDfbvEDRqLg [36m302[0m 1.266 ms - 105[0m
+[server] [0mGET /static/thumbs/s3://n11817143-a2/thumbnails23ebacd1-6b6c-4bea-86d2-6227df10fc0d.jpg [33m404[0m 0.621 ms - 58[0m
+[server] [0mGET /api/auth/me [36m304[0m 0.532 ms - -[0m
+[server] [0mGET /api/auth/me [36m304[0m 0.588 ms - -[0m
+[server] [0mGET /api/videos?page=1&limit=6 [36m304[0m 1.593 ms - -[0m
+[server] [0mGET /api/videos?page=1&limit=6 [36m304[0m 2.324 ms - -[0m
+[server] [0mGET /api/videos/23ebacd1-6b6c-4bea-86d2-6227df10fc0d/thumbnail?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsInVzZXJuYW1lIjoidXNlcm5hbWUiLCJpYXQiOjE3NTkwMDY3NjQsImV4cCI6MTc1OTAxMDM2NH0.4N7zvZlBGv_kG3rbCjyKV29Y7P7GDwVyiDfbvEDRqLg [36m302[0m 1.333 ms - 105[0m
+[server] [0mGET /static/thumbs/s3://n11817143-a2/thumbnails23ebacd1-6b6c-4bea-86d2-6227df10fc0d.jpg [33m404[0m 0.562 ms - 58[0m
+[server] [0mDELETE /api/videos/23ebacd1-6b6c-4bea-86d2-6227df10fc0d [32m200[0m 13.352 ms - 27[0m
+[server] [0mGET /api/videos?page=1&limit=6 [32m200[0m 1.550 ms - 41[0m
+[server] [0mPOST /api/videos/upload [32m201[0m 1127.653 ms - 50[0m
+[server] [0mGET /api/videos?page=1&limit=6 [32m200[0m 1.593 ms - 526[0m
+[server] [0mGET /api/videos/e724cd31-575f-4b17-b30c-0aa8b78f0ffe/thumbnail?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsInVzZXJuYW1lIjoidXNlcm5hbWUiLCJpYXQiOjE3NTkwMDY3NjQsImV4cCI6MTc1OTAxMDM2NH0.4N7zvZlBGv_kG3rbCjyKV29Y7P7GDwVyiDfbvEDRqLg [36m302[0m 1.305 ms - 77[0m
+[server] [0mGET /static/thumbs/e724cd31-575f-4b17-b30c-0aa8b78f0ffe.jpg [32m200[0m 2.973 ms - 25356[0m
+[server] [32m[nodemon] restarting due to changes...[39m
+[server] [32m[nodemon] starting `node src/index.js`[39m
+[server] Server listening on http://0.0.0.0:8080
+[server] Available at: http://n11817143-videoapp.cab432.com
+[server] [0mGET /api/videos/e724cd31-575f-4b17-b30c-0aa8b78f0ffe/stream?variant=original&token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsInVzZXJuYW1lIjoidXNlcm5hbWUiLCJpYXQiOjE3NTkwMDY3NjQsImV4cCI6MTc1OTAxMDM2NH0.4N7zvZlBGv_kG3rbCjyKV29Y7P7GDwVyiDfbvEDRqLg [36m302[0m 8.319 ms - 91[0m
+[server] [0mGET /static/videos/1759006792173-5dbb05b9-c563-42b2-b49b-6e7effb0a650.mp4 [32m206[0m 3.747 ms - 889462[0m
+[server] [0mGET /static/videos/1759006792173-5dbb05b9-c563-42b2-b49b-6e7effb0a650.mp4 [32m206[0m 1.196 ms - 529014[0m
+[server] [0mGET /static/videos/1759006792173-5dbb05b9-c563-42b2-b49b-6e7effb0a650.mp4 [32m206[0m 0.825 ms - 397942[0m
+[server] [0mHEAD /api/health [32m200[0m 1.718 ms - 15[0m
+[server] Starting ffmpeg transcode for video e724cd31-575f-4b17-b30c-0aa8b78f0ffe
+[server] [0mPOST /api/videos/e724cd31-575f-4b17-b30c-0aa8b78f0ffe/transcode [32m200[0m 11534.912 ms - 31[0m
+[server] [0mGET /api/videos?page=1&limit=6 [32m200[0m 3.063 ms - 580[0m
+[server] [0mPOST /api/auth/register [32m201[0m 78.110 ms - 38[0m
+[server] [0mPOST /api/auth/login [32m200[0m 68.443 ms - 218[0m
+[server] [0mGET /api/videos?page=1&limit=6 [32m200[0m 1.734 ms - 580[0m
+[server] [0mGET /api/auth/me [32m200[0m 0.852 ms - 39[0m
+[server] [0mGET /api/videos?page=1&limit=6 [36m304[0m 1.862 ms - -[0m
+[server] [0mGET /api/videos/e724cd31-575f-4b17-b30c-0aa8b78f0ffe/thumbnail?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsInVzZXJuYW1lIjoidXNlcm5hbWUiLCJpYXQiOjE3NTkwMDY4NzUsImV4cCI6MTc1OTAxMDQ3NX0.4n8UONgsUCJl5AeJXzS7MzuRQvkwqf-vBS-5RjM72nI [36m302[0m 1.966 ms - 77[0m
+[server] [0mGET /static/thumbs/e724cd31-575f-4b17-b30c-0aa8b78f0ffe.jpg [32m200[0m 0.891 ms - 25356[0m
+[server] Starting ffmpeg transcode for video e724cd31-575f-4b17-b30c-0aa8b78f0ffe
+[server] [0mGET /api/videos/e724cd31-575f-4b17-b30c-0aa8b78f0ffe/stream?variant=transcoded&token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsInVzZXJuYW1lIjoidXNlcm5hbWUiLCJpYXQiOjE3NTkwMDY4NzUsImV4cCI6MTc1OTAxMDQ3NX0.4n8UONgsUCJl5AeJXzS7MzuRQvkwqf-vBS-5RjM72nI [36m302[0m 11.901 ms - 96[0m
+[server] [0mGET /static/videos/1759006792173-5dbb05b9-c563-42b2-b49b-6e7effb0a650-720p.mp4 [32m206[0m 1.737 ms - 262192[0m
+[server] [0mPOST /api/auth/login [32m200[0m 254.038 ms - 216[0m
+[server] [0mPOST /api/videos/e724cd31-575f-4b17-b30c-0aa8b78f0ffe/transcode [32m200[0m 11412.763 ms - 31[0m
+[server] [0mGET /api/videos?page=1&limit=6 [32m200[0m 1.915 ms - 580[0m
+[server] [0mGET /api/videos/e724cd31-575f-4b17-b30c-0aa8b78f0ffe/stream?variant=original&token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsInVzZXJuYW1lIjoidXNlcm5hbWUiLCJpYXQiOjE3NTkwMDY4NzUsImV4cCI6MTc1OTAxMDQ3NX0.4n8UONgsUCJl5AeJXzS7MzuRQvkwqf-vBS-5RjM72nI [36m302[0m 1.213 ms - 91[0m
+[server] [0mGET /static/videos/1759006792173-5dbb05b9-c563-42b2-b49b-6e7effb0a650.mp4 [32m206[0m 0.887 ms - 889462[0m
+[server] [0mGET /static/videos/1759006792173-5dbb05b9-c563-42b2-b49b-6e7effb0a650.mp4 [36m304[0m 0.846 ms - -[0m
+[server] [0mGET /static/videos/1759006792173-5dbb05b9-c563-42b2-b49b-6e7effb0a650.mp4 [32m206[0m 1.194 ms - 522373[0m
+[server] [0mHEAD /api/health [32m200[0m 0.323 ms - 15[0m
+[server] [0mPOST /api/auth/login [33m401[0m 67.750 ms - 82[0m
+[server] [0mPOST /api/auth/login [32m200[0m 67.785 ms - 218[0m
+[server] [0mGET /api/videos?page=1&limit=6 [32m200[0m 1.707 ms - 580[0m
+[server] [0mGET /api/auth/me [32m200[0m 0.591 ms - 39[0m
+[server] [0mGET /api/videos?page=1&limit=6 [36m304[0m 1.629 ms - -[0m
+[server] [0mGET /api/videos/e724cd31-575f-4b17-b30c-0aa8b78f0ffe/thumbnail?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsInVzZXJuYW1lIjoidXNlcm5hbWUiLCJpYXQiOjE3NTkwMDc4NDcsImV4cCI6MTc1OTAxMTQ0N30.u3-rAw7OzihdTCGWaJeHugetoeuQmjB3TbZGiLtLlkc [36m302[0m 1.393 ms - 77[0m
+[server] [0mGET /static/thumbs/e724cd31-575f-4b17-b30c-0aa8b78f0ffe.jpg [32m200[0m 1.098 ms - 25356[0m
+[server] [0mGET /api/videos/e724cd31-575f-4b17-b30c-0aa8b78f0ffe/stream?variant=transcoded&token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsInVzZXJuYW1lIjoidXNlcm5hbWUiLCJpYXQiOjE3NTkwMDc4NDcsImV4cCI6MTc1OTAxMTQ0N30.u3-rAw7OzihdTCGWaJeHugetoeuQmjB3TbZGiLtLlkc [36m302[0m 2.740 ms - 96[0m
+[server] [0mGET /static/videos/1759006792173-5dbb05b9-c563-42b2-b49b-6e7effb0a650-720p.mp4 [32m206[0m 1.184 ms - 1931046[0m
+[server] [0mGET /api/videos/e724cd31-575f-4b17-b30c-0aa8b78f0ffe/stream?variant=original&token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsInVzZXJuYW1lIjoidXNlcm5hbWUiLCJpYXQiOjE3NTkwMDc4NDcsImV4cCI6MTc1OTAxMTQ0N30.u3-rAw7OzihdTCGWaJeHugetoeuQmjB3TbZGiLtLlkc [36m302[0m 1.568 ms - 91[0m
+[server] [0mGET /static/videos/1759006792173-5dbb05b9-c563-42b2-b49b-6e7effb0a650.mp4 [32m206[0m 0.998 ms - 889462[0m
+[server] [0mPOST /api/auth/login [32m200[0m 66.051 ms - 218[0m
+[server] [0mGET /api/videos?page=1&limit=6 [36m304[0m 1.547 ms - -[0m
+[server] [0mGET /api/auth/me [36m304[0m 0.427 ms - -[0m
+[server] [0mGET /api/videos?page=1&limit=6 [36m304[0m 2.471 ms - -[0m
+[server] [0mGET /api/videos/e724cd31-575f-4b17-b30c-0aa8b78f0ffe/thumbnail?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsInVzZXJuYW1lIjoidXNlcm5hbWUiLCJpYXQiOjE3NTkwMDc4ODMsImV4cCI6MTc1OTAxMTQ4M30.ES4TkbiDwk7evFcPrmUh9Sz_iBsidjm3t1lCpZxZvdU [36m302[0m 1.193 ms - 77[0m
+[server] [0mGET /static/thumbs/e724cd31-575f-4b17-b30c-0aa8b78f0ffe.jpg [36m304[0m 0.487 ms - -[0m
+[server] [0mPOST /api/auth/login [32m200[0m 66.871 ms - 218[0m
+[server] [0mGET /api/videos?page=1&limit=6 [36m304[0m 1.450 ms - -[0m
+[server] [0mGET /api/auth/me [36m304[0m 0.571 ms - -[0m
+[server] [0mGET /api/videos?page=1&limit=6 [36m304[0m 1.127 ms - -[0m
+[server] [0mGET /api/videos/e724cd31-575f-4b17-b30c-0aa8b78f0ffe/thumbnail?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsInVzZXJuYW1lIjoidXNlcm5hbWUiLCJpYXQiOjE3NTkwMDc4OTAsImV4cCI6MTc1OTAxMTQ5MH0.wLS7XvkpkctN-wVCcQj2uGAzPUMF3rnm6L7N2CQ3iYg [36m302[0m 1.387 ms - 77[0m
+[server] [0mGET /static/thumbs/e724cd31-575f-4b17-b30c-0aa8b78f0ffe.jpg [36m304[0m 0.406 ms - -[0m
+[server] [0mPOST /api/auth/login [32m200[0m 66.759 ms - 218[0m
+[server] [0mGET /api/auth/me [36m304[0m 0.664 ms - -[0m
+[server] [0mGET /api/videos?page=1&limit=6 [36m304[0m 1.255 ms - -[0m
+[server] [0mGET /api/videos?page=1&limit=6 [36m304[0m 1.458 ms - -[0m
+[server] [0mGET /api/videos/e724cd31-575f-4b17-b30c-0aa8b78f0ffe/thumbnail?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsInVzZXJuYW1lIjoidXNlcm5hbWUiLCJpYXQiOjE3NTkwMDc4OTQsImV4cCI6MTc1OTAxMTQ5NH0.j6jRVKEaAMJ9Nv3YI6-YOB6pmg5QC0PHY5s6eJFrrpU [36m302[0m 1.253 ms - 77[0m
+[server] [0mGET /static/thumbs/e724cd31-575f-4b17-b30c-0aa8b78f0ffe.jpg [36m304[0m 0.432 ms - -[0m
+[server] [0mGET /api/videos/e724cd31-575f-4b17-b30c-0aa8b78f0ffe/stream?variant=transcoded&token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsInVzZXJuYW1lIjoidXNlcm5hbWUiLCJpYXQiOjE3NTkwMDc4OTQsImV4cCI6MTc1OTAxMTQ5NH0.j6jRVKEaAMJ9Nv3YI6-YOB6pmg5QC0PHY5s6eJFrrpU [36m302[0m 1.261 ms - 96[0m
+[server] [0mGET /static/videos/1759006792173-5dbb05b9-c563-42b2-b49b-6e7effb0a650-720p.mp4 [36m304[0m 0.651 ms - -[0m
+[server] [32m[nodemon] restarting child process[39m
+[server] [32m[nodemon] starting `node src/index.js`[39m
+[client] npm --prefix client run dev exited with code SIGHUP
+[server] Server listening on http://0.0.0.0:8080
+[server] Available at: http://n11817143-videoapp.cab432.com

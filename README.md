@@ -1,57 +1,77 @@
 # Video Web App
 
-A local-first video management web application with an Express/SQLite backend and a React (Vite) frontend. Upload videos, generate thumbnails, trigger ffmpeg transcodes, and stream securely via JWT.
+A full-stack video management web application with Express/SQLite backend and React (Vite) frontend. Upload videos, generate thumbnails, trigger FFmpeg transcodes, and stream securely via JWT authentication.
+
+🌐 **Live Application**: http://n11817143-videoapp.cab432.com:3000
+🔧 **API Endpoint**: http://n11817143-videoapp.cab432.com:8080/api
 
 ## Prerequisites
-- Node.js 18+
-- npm 9+
-- [ffmpeg](https://ffmpeg.org/) installed and available on your `PATH`
+- Node.js 22.20.0+
+- npm 10+
+- [FFmpeg](https://ffmpeg.org/) installed and available on your `PATH`
+- Domain: `n11817143-videoapp.cab432.com` (Route53 configured)
 
-## Getting Started
-1. **Install backend dependencies**
-   ```bash
-   cd server
-   npm install
-   ```
-2. **Configure environment and initialize the database**
-   ```bash
-   cp .env.example .env
-   npm run init-db
-   ```
-3. **Install frontend dependencies**
-   ```bash
-   cd ../client
-   npm install
-   ```
-4. **Run both apps together**
-   ```bash
-   cd ..
-   npm run dev
-   ```
-5. **Other Essentials**
+## Quick Start
+
+### 🚀 **Easy Start (Recommended)**
 ```bash
-npm install
-````
-```bash
-sudo apt-get update
-sudo apt-get install ffmpeg
+# Clone and navigate to project
+cd /home/ubuntu/my-node-server/webapp.v1
+
+# Install all dependencies
+npm run install:all
+
+# Initialize database
+cd server && npm run init-db && cd ..
+
+# Start application
+./start-app.sh
 ```
 
-The root `npm run dev` script launches the Express API (port 8080 by default) and the Vite dev server (port 5173) concurrently. The backend serves uploaded videos and thumbnails from `server/src/public`.
+### 📋 **Manual Setup**
+1. **Install all dependencies**
+   ```bash
+   npm run install:all
+   ```
+
+2. **Install system dependencies**
+   ```bash
+   sudo apt update && sudo apt install -y ffmpeg
+   ```
+
+3. **Initialize database**
+   ```bash
+   cd server && npm run init-db
+   ```
+
+4. **Start development servers**
+   ```bash
+   npm run dev
+   ```
+
+The application runs on:
+- **Frontend**: http://n11817143-videoapp.cab432.com:3000
+- **Backend**: http://n11817143-videoapp.cab432.com:8080
 
 ## Running with Docker
 
-Build and run backend + frontend locally:
+### 🐳 **Development with Docker**
 ```bash
+# Build and run with current domain configuration
 docker-compose up --build
-
 ```
 
-Access:
+**Access URLs:**
+- Frontend → http://n11817143-videoapp.cab432.com:3000
+- Backend API → http://n11817143-videoapp.cab432.com:8080/api
+- Health Check → http://n11817143-videoapp.cab432.com:8080/api/health
 
-- Frontend → http://localhost
-
-- Backend API → http://localhost:8080
+### 🔧 **Docker Configuration**
+The `docker-compose.yml` is configured for:
+- **Domain**: `n11817143-videoapp.cab432.com`
+- **Backend Port**: 8080
+- **Frontend Port**: 3000 (mapped to 80 in container)
+- **CORS**: Properly configured for domain access
 
 ## Deploying to AWS
 
@@ -97,13 +117,36 @@ Now app is live at `http://<ec2-public-ip>`.
 - Trigger a transcode to 720p (H.264/AAC) from the dashboard. Progress is reflected in the video status (`uploaded → transcoding → ready`).
 - Stream or download originals/transcodes directly in the dashboard via the secure `/stream` endpoint.
 
+## Environment Configuration
+
+### 📁 **Server Environment (`.env`)**
+```bash
+PORT=8080
+JWT_SECRET=change_me_in_production
+TOKEN_EXPIRY=1h
+DB_FILE=./data.sqlite
+PUBLIC_DIR=./src/public
+CLIENT_ORIGINS=http://n11817143-videoapp.cab432.com:3000
+LIMIT_FILE_SIZE_MB=512
+AWS_REGION=ap-southeast-2
+USE_LOCAL_STORAGE=true
+```
+
+### 🌐 **Client Environment (`.env`)**
+```bash
+VITE_API_URL=http://n11817143-videoapp.cab432.com:8080/api
+VITE_AWS_REGION=ap-southeast-2
+```
+
 ## Troubleshooting
 | Issue | Fix |
 |-------|-----|
-| `ffmpeg` not found | Ensure ffmpeg is installed and accessible via your shell `PATH`. On macOS you can use Homebrew (`brew install ffmpeg`); on Linux use your package manager. |
-| CORS errors in the browser console | Confirm `CLIENT_ORIGINS` inside `server/.env` includes the domain you are using (for example `http://n11817143-videoapp.cab432.com`). Restart the server after changes. |
-| File upload limits | Multer defaults allow reasonably large files, but Node may still hit memory limits on extremely large uploads. Adjust `LIMIT_FILE_SIZE_MB` in `.env` and restart if needed. |
-| Database missing tables | Re-run `npm run init-db` inside `/server` to create or migrate the SQLite schema. |
+| `ffmpeg` not found | Install: `sudo apt update && sudo apt install -y ffmpeg` |
+| CORS errors in browser | Ensure `CLIENT_ORIGINS=http://n11817143-videoapp.cab432.com:3000` in `server/.env` |
+| API connection failed | Verify backend is running on port 8080 and accessible via domain |
+| File upload limits | Adjust `LIMIT_FILE_SIZE_MB=512` in `server/.env` |
+| Database missing tables | Run `cd server && npm run init-db` |
+| Application won't start | Run `./start-app.sh` or check logs with `tail -f app.log` |
 
 ## File Storage Layout
 ```
@@ -117,14 +160,50 @@ Backups are as simple as copying the SQLite file (`server/data.sqlite` by defaul
 ## Testing Users
 Create accounts directly via the UI login form (switch to Register tab) or issue a `POST /api/auth/register` call with `{ "username": "demo", "password": "demo123" }`.
 
-## Scripts Overview
-- `npm run dev` (root): run both backend and frontend concurrently
-- `npm run dev` (server): nodemon-powered Express server with auto-reload
-- `npm run init-db` (server): create the SQLite tables
-- `npm run lint` (server/client): run ESLint for code quality
-- `npm run build` (client): build production-ready frontend assets
+## 🛠️ **Available Scripts**
 
-Enjoy building locally without any cloud dependencies!
+### Root Directory
+- `npm run dev` - Start both backend and frontend concurrently
+- `npm run install:all` - Install dependencies for both server and client
+- `./start-app.sh` - Easy application startup script
+- `./test-app.sh` - Comprehensive testing suite
+
+### Server Directory (`/server`)
+- `npm run dev` - Start Express server with nodemon (auto-reload)
+- `npm run start` - Start production server
+- `npm run init-db` - Initialize SQLite database
+- `npm run lint` - Run ESLint for code quality
+
+### Client Directory (`/client`)
+- `npm run dev` - Start Vite development server
+- `npm run build` - Build production-ready assets
+- `npm run preview` - Preview production build
+- `npm run lint` - Run ESLint for React code
+
+## ✅ **Current Features**
+- 🔐 **JWT Authentication** - Secure user registration and login
+- 📹 **Video Upload** - Multi-part file upload with validation
+- 🎬 **Video Processing** - FFmpeg integration for thumbnails and transcoding
+- 📱 **Responsive UI** - React-based frontend with modern design
+- 🔄 **Real-time Updates** - Live video processing status
+- 🌐 **Domain Integration** - Configured for `n11817143-videoapp.cab432.com`
+- 📡 **CORS Support** - Proper cross-origin resource sharing
+- 💾 **Local Storage** - SQLite database with file system storage
+- 🐳 **Docker Ready** - Complete containerization support
+
+## 🧪 **Testing**
+Run comprehensive tests:
+```bash
+./test-app.sh
+```
+
+This tests:
+- DNS resolution
+- API endpoints
+- CORS configuration
+- File system setup
+- Process status
+- System dependencies
 
 ## 
 

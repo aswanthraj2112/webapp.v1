@@ -10,7 +10,12 @@ import { ensureStorageDirs } from './videos/video.controller.js';
 
 const app = express();
 
-app.use(cors({ origin: config.CLIENT_ORIGINS }));
+app.use(cors({
+  origin: config.CLIENT_ORIGINS,
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -37,8 +42,9 @@ app.use(errorHandler);
 const start = async () => {
   await ensureStorageDirs();
   await initDb();
-  app.listen(config.PORT, () => {
-    console.log(`Server listening on http://localhost:${config.PORT}`);
+  app.listen(config.PORT, '0.0.0.0', () => {
+    console.log(`Server listening on http://0.0.0.0:${config.PORT}`);
+    console.log(`Available at: http://n11817143-videoapp.cab432.com`);
   });
 };
 

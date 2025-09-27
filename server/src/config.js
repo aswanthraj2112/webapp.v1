@@ -13,14 +13,14 @@ const resolveFromRoot = (maybeRelative) =>
     ? maybeRelative
     : path.resolve(rootDir, maybeRelative);
 
-const defaultOrigin = 'http://localhost:3000';
+const defaultOrigin = 'http://n11817143-videoapp.cab432.com';
 const rawOrigins = process.env.CLIENT_ORIGINS || process.env.CLIENT_ORIGIN;
 
 const parsedOrigins = rawOrigins
   ? rawOrigins
-      .split(',')
-      .map((value) => value.trim())
-      .filter(Boolean)
+    .split(',')
+    .map((value) => value.trim())
+    .filter(Boolean)
   : [];
 
 if (parsedOrigins.length === 0) {

@@ -2,12 +2,21 @@ version: "3.9"
 services:
   backend:
     build: ./server
-    ports: ["8080:8080"]
+    ports: [ "8080:8080" ]
     environment:
       - AWS_REGION=ap-southeast-2
-      - CLIENT_ORIGINS=http://n11817143-videoapp.cab432.com
+      - CLIENT_ORIGINS=http://n11817143-videoapp.cab432.com:3000
+      - JWT_SECRET=change_me_in_production
+      - USE_LOCAL_STORAGE=true
+      - LIMIT_FILE_SIZE_MB=512
+    volumes:
+      - ./server/data:/app/data
+      - ./server/src/public:/app/src/public
   frontend:
     build: ./client
-    ports: ["80:80"]
+    ports: [ "3000:3000" ]
     environment:
-      - VITE_API_URL=http://n11817143-videoapp.cab432.com/api
+      - VITE_API_URL=http://n11817143-videoapp.cab432.com:8080/api
+      - VITE_AWS_REGION=ap-southeast-2
+    depends_on:
+      - backend
