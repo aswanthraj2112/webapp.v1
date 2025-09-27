@@ -37,7 +37,7 @@ sudo apt-get update
 sudo apt-get install ffmpeg
 ```
 
-The root `npm run dev` script launches the Express API (port 4000 by default) and the Vite dev server (port 5173) concurrently. The backend serves uploaded videos and thumbnails from `server/src/public`.
+The root `npm run dev` script launches the Express API (port 8080 by default) and the Vite dev server (port 5173) concurrently. The backend serves uploaded videos and thumbnails from `server/src/public`.
 
 ## Running with Docker
 
@@ -51,7 +51,7 @@ Access:
 
 - Frontend → http://localhost
 
-- Backend API → http://localhost:4000
+- Backend API → http://localhost:8080
 
 ## Deploying to AWS
 
@@ -71,7 +71,7 @@ docker push <acct-id>.dkr.ecr.ap-southeast-2.amazonaws.com/video-webapp-frontend
 3. On EC2, pull and run:
 ```bash
 docker pull <acct-id>.dkr.ecr.ap-southeast-2.amazonaws.com/video-webapp-backend:latest
-docker run -d -p 4000:4000 video-webapp-backend
+docker run -d -p 8080:8080 video-webapp-backend
 
 docker pull <acct-id>.dkr.ecr.ap-southeast-2.amazonaws.com/video-webapp-frontend:latest
 docker run -d -p 80:80 video-webapp-frontend
@@ -101,7 +101,7 @@ Now app is live at `http://<ec2-public-ip>`.
 | Issue | Fix |
 |-------|-----|
 | `ffmpeg` not found | Ensure ffmpeg is installed and accessible via your shell `PATH`. On macOS you can use Homebrew (`brew install ffmpeg`); on Linux use your package manager. |
-| CORS errors in the browser console | Confirm `CLIENT_ORIGIN` inside `server/.env` matches the Vite dev URL (default `http://localhost:5173`). Restart the server after changes. |
+| CORS errors in the browser console | Confirm `CLIENT_ORIGINS` inside `server/.env` includes the domain you are using (for example `http://n11817143-videoapp.cab432.com`). Restart the server after changes. |
 | File upload limits | Multer defaults allow reasonably large files, but Node may still hit memory limits on extremely large uploads. Adjust `LIMIT_FILE_SIZE_MB` in `.env` and restart if needed. |
 | Database missing tables | Re-run `npm run init-db` inside `/server` to create or migrate the SQLite schema. |
 

@@ -2,12 +2,12 @@ version: "3.9"
 services:
   backend:
     build: ./server
-    ports: ["4000:4000"]
+    ports: ["8080:8080"]
     environment:
-      - JWT_SECRET=change_me
-      - CLIENT_ORIGIN=http://localhost
+      - AWS_REGION=ap-southeast-2
+      - CLIENT_ORIGINS=http://n11817143-videoapp.cab432.com
   frontend:
     build: ./client
     ports: ["80:80"]
     environment:
-      - VITE_API_URL=http://localhost:4000
+      - VITE_API_URL=http://n11817143-videoapp.cab432.com/api
