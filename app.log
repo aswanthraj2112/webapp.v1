@@ -148,3 +148,50 @@ nohup: ignoring input
 [client] npm --prefix client run dev exited with code SIGHUP
 [server] Server listening on http://0.0.0.0:8080
 [server] Available at: http://n11817143-videoapp.cab432.com
+[server] [0mGET /login [33m404[0m 2.635 ms - 58[0m
+[server] [32m[nodemon] restarting due to changes...[39m
+[server] [32m[nodemon] starting `node src/index.js`[39m
+[server] [32m[nodemon] restarting due to changes...[39m
+[server] [32m[nodemon] starting `node src/index.js`[39m
+[server] Server listening on http://0.0.0.0:8080
+[server] Available at: http://n11817143-videoapp.cab432.com
+[server] [32m[nodemon] restarting due to changes...[39m
+[server] [32m[nodemon] starting `node src/index.js`[39m
+[server] [32m[nodemon] restarting due to changes...[39m
+[server] [32m[nodemon] starting `node src/index.js`[39m
+[server] Server listening on http://0.0.0.0:8080
+[server] Available at: http://n11817143-videoapp.cab432.com
+[server] [32m[nodemon] restarting due to changes...[39m
+[server] [32m[nodemon] starting `node src/index.js`[39m
+[server] Server listening on http://0.0.0.0:8080
+[server] Available at: http://n11817143-videoapp.cab432.com
+[server] [32m[nodemon] restarting due to changes...[39m
+[server] [32m[nodemon] starting `node src/index.js`[39m
+[server] Server listening on http://0.0.0.0:8080
+[server] Available at: http://n11817143-videoapp.cab432.com
+[server] [32m[nodemon] restarting due to changes...[39m
+[server] [32m[nodemon] starting `node src/index.js`[39m
+[server] 🚀 Starting server...
+[server] 🔐 Loading secrets from AWS Secrets Manager...
+[server] ✅ JWT secret loaded from AWS Secrets Manager
+[server] Server listening on http://0.0.0.0:8080
+[server] Available at: http://n11817143-videoapp.cab432.com
+[server] JWT Secret loaded: ✅ From Secrets Manager
+[server] [0mGET /static/videos/1759006792173-5dbb05b9-c563-42b2-b49b-6e7effb0a650-720p.mp4 [36m304[0m 2.548 ms - -[0m
+[server] [0mGET /api/videos/e724cd31-575f-4b17-b30c-0aa8b78f0ffe/stream?variant=original&token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsInVzZXJuYW1lIjoidXNlcm5hbWUiLCJpYXQiOjE3NTkwMDc4OTQsImV4cCI6MTc1OTAxMTQ5NH0.j6jRVKEaAMJ9Nv3YI6-YOB6pmg5QC0PHY5s6eJFrrpU [33m401[0m 4.065 ms - 78[0m
+[server] [0mGET /api/videos/e724cd31-575f-4b17-b30c-0aa8b78f0ffe/stream?variant=transcoded&token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsInVzZXJuYW1lIjoidXNlcm5hbWUiLCJpYXQiOjE3NTkwMDc4OTQsImV4cCI6MTc1OTAxMTQ5NH0.j6jRVKEaAMJ9Nv3YI6-YOB6pmg5QC0PHY5s6eJFrrpU [33m401[0m 1.405 ms - 78[0m
+[server] [0mGET /api/videos/e724cd31-575f-4b17-b30c-0aa8b78f0ffe/stream?variant=transcoded&token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsInVzZXJuYW1lIjoidXNlcm5hbWUiLCJpYXQiOjE3NTkwMDc4OTQsImV4cCI6MTc1OTAxMTQ5NH0.j6jRVKEaAMJ9Nv3YI6-YOB6pmg5QC0PHY5s6eJFrrpU [33m401[0m 0.996 ms - 78[0m
+[server] [0mGET /api/videos/e724cd31-575f-4b17-b30c-0aa8b78f0ffe/stream?variant=original&token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsInVzZXJuYW1lIjoidXNlcm5hbWUiLCJpYXQiOjE3NTkwMDc4OTQsImV4cCI6MTc1OTAxMTQ5NH0.j6jRVKEaAMJ9Nv3YI6-YOB6pmg5QC0PHY5s6eJFrrpU [33m401[0m 0.760 ms - 78[0m
+[server] [32m[nodemon] restarting due to changes...[39m
+[server] [32m[nodemon] starting `node src/index.js`[39m
+[server] [32m[nodemon] restarting due to changes...[39m
+[server] [32m[nodemon] restarting due to changes...[39m
+[server] [32m[nodemon] starting `node src/index.js`[39m
+[server] 🚀 Starting server...
+[server] 🔐 Loading secrets from AWS Secrets Manager...
+[server] ✅ JWT secret loaded from AWS Secrets Manager
+[server] Server listening on http://0.0.0.0:8080
+[server] Available at: http://n11817143-videoapp.cab432.com
+[server] JWT Secret loaded: ✅ From Secrets Manager
+[server] [31m[nodemon] app crashed - waiting for file changes before starting...[39m
+[server] npm --prefix server run dev exited with code SIGHUP

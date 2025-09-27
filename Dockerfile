@@ -56,6 +56,9 @@ COPY package.json ./
 COPY start-app.sh ./
 RUN chmod +x start-app.sh
 
+# Set AWS region for Secrets Manager
+ENV AWS_REGION=ap-southeast-2
+
 # Create startup script that runs both services
 RUN echo '#!/bin/bash\n\
     cd /app/server && npm start &\n\
@@ -67,7 +70,7 @@ EXPOSE 8080 3000
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
-    CMD curl -f http://localhost:8080/api/health || exit 1
+    CMD curl -f http://n11817143-videoapp.cab432.com:8080/api/health || exit 1
 
 # Start both services
 CMD ["/app/start-combined.sh"]

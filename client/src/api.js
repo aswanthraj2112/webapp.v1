@@ -1,6 +1,6 @@
-const RAW_API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+const RAW_API_URL = import.meta.env.VITE_API_URL || 'http://n11817143-videoapp.cab432.com:8080';
 
-function trimTrailingSlashes (value) {
+function trimTrailingSlashes(value) {
   if (!value) return '';
 
   let result = `${value}`.trim();
@@ -10,7 +10,7 @@ function trimTrailingSlashes (value) {
   return result;
 }
 
-function normalizeBaseUrl (url) {
+function normalizeBaseUrl(url) {
   if (!url) return '';
 
   const trimmed = trimTrailingSlashes(url);
@@ -31,12 +31,12 @@ function normalizeBaseUrl (url) {
 
 const API_BASE_URL = normalizeBaseUrl(RAW_API_URL);
 
-function buildRequestUrl (path = '') {
+function buildRequestUrl(path = '') {
   const sanitizedPath = path.startsWith('/') ? path : `/${path}`;
   return new URL(sanitizedPath, `${API_BASE_URL}/`).toString();
 }
 
-async function request (path, { method = 'GET', token, body, headers = {} } = {}) {
+async function request(path, { method = 'GET', token, body, headers = {} } = {}) {
   const options = { method, headers: { ...headers } };
 
   if (token) {

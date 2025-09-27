@@ -1,6 +1,7 @@
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { getJWTSecret } from './utils/secrets.js';
 
 dotenv.config();
 
@@ -29,13 +30,25 @@ if (parsedOrigins.length === 0) {
 
 const config = {
   PORT: Number.parseInt(process.env.PORT || '8080', 10),
-  JWT_SECRET: process.env.JWT_SECRET || 'change_me',
+  JWT_SECRET: null, // Will be loaded from Secrets Manager
   TOKEN_EXPIRY: process.env.TOKEN_EXPIRY || '1h',
   DB_FILE: resolveFromRoot(process.env.DB_FILE || './data.sqlite'),
   PUBLIC_DIR: resolveFromRoot(process.env.PUBLIC_DIR || './src/public'),
   CLIENT_ORIGINS: parsedOrigins,
   LIMIT_FILE_SIZE_MB: Number.parseInt(process.env.LIMIT_FILE_SIZE_MB || '512', 10),
   USE_LOCAL_STORAGE: process.env.USE_LOCAL_STORAGE === 'true'
+};
+
+// Load JWT secret from AWS Secrets Manager
+config.initializeSecrets = async function () {
+  try {
+    this.JWT_SECRET = await getJWTSecret();
+    console.log('✅ JWT secret loaded from AWS Secrets Manager');
+  } catch (error) {
+    console.error('❌ Failed to load JWT secret from Secrets Manager:', error.message);
+    this.JWT_SECRET = process.env.JWT_SECRET || 'change_me';
+    console.log('⚠️  Using fallback JWT secret from environment');
+  }
 };
 
 config.CLIENT_ORIGIN = config.CLIENT_ORIGINS[0];

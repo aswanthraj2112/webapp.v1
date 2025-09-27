@@ -112,8 +112,8 @@ docker run -d -p 8080:8080 -p 3000:3000 \
 docker logs -f video-webapp-test
 
 # Test endpoints
-curl http://localhost:8080/api/health
-curl http://localhost:3000
+curl http://n11817143-videoapp.cab432.com:8080/api/health
+curl http://n11817143-videoapp.cab432.com:3000
 ```
 
 ### **Debug Container**
