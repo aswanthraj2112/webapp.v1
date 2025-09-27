@@ -7,7 +7,12 @@
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
     "init-db": "node src/db.js --init",
-    "lint": "eslint \"src/**/*.js\""
+    "lint": "eslint \"src/**/*.js\"",
+    "params:list": "node parameter-cli.js list",
+    "params:validate": "node parameter-cli.js validate",
+    "params:test": "node test-parameter-store.js",
+    "params:status": "node parameter-store-status.js",
+    "params:clear-cache": "node parameter-cli.js clear-cache"
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.609.0",

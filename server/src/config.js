@@ -2,6 +2,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { getJWTSecret } from './utils/secrets.js';
+import { loadAppConfig } from './utils/parameterStore.js';
 
 dotenv.config();
 
@@ -35,20 +36,65 @@ const config = {
   DB_FILE: resolveFromRoot(process.env.DB_FILE || './data.sqlite'),
   PUBLIC_DIR: resolveFromRoot(process.env.PUBLIC_DIR || './src/public'),
   CLIENT_ORIGINS: parsedOrigins,
-  LIMIT_FILE_SIZE_MB: Number.parseInt(process.env.LIMIT_FILE_SIZE_MB || '512', 10),
-  USE_LOCAL_STORAGE: process.env.USE_LOCAL_STORAGE === 'true'
+  USE_LOCAL_STORAGE: process.env.USE_LOCAL_STORAGE === 'true',
+
+  // Parameter Store configurations (will be loaded)
+  COGNITO_CLIENT_ID: null,
+  COGNITO_USER_POOL_ID: null,
+  DOMAIN_NAME: null,
+  DYNAMO_TABLE: null,
+  DYNAMO_OWNER_INDEX: null,
+  MAX_UPLOAD_SIZE_MB: null,
+  PRESIGNED_URL_TTL: null,
+  S3_BUCKET: null,
+  S3_RAW_PREFIX: null,
+  S3_THUMBNAIL_PREFIX: null,
+  S3_TRANSCODED_PREFIX: null,
+
+  // Legacy compatibility
+  get LIMIT_FILE_SIZE_MB() {
+    return this.MAX_UPLOAD_SIZE_MB || Number.parseInt(process.env.LIMIT_FILE_SIZE_MB || '512', 10);
+  }
 };
 
-// Load JWT secret from AWS Secrets Manager
-config.initializeSecrets = async function () {
+// Initialize all configurations
+config.initialize = async function () {
   try {
+    // Load Parameter Store configuration
+    const paramConfig = await loadAppConfig();
+    Object.assign(this, paramConfig);
+
+    // Load JWT secret from AWS Secrets Manager
     this.JWT_SECRET = await getJWTSecret();
     console.log('✅ JWT secret loaded from AWS Secrets Manager');
+
+    console.log('✅ All configurations loaded successfully');
+
+    // Log configuration summary (without sensitive data)
+    console.log('📋 Configuration Summary:');
+    console.log(`   - Domain: ${this.DOMAIN_NAME}`);
+    console.log(`   - S3 Bucket: ${this.S3_BUCKET}`);
+    console.log(`   - DynamoDB Table: ${this.DYNAMO_TABLE}`);
+    console.log(`   - Max Upload Size: ${this.MAX_UPLOAD_SIZE_MB}MB`);
+    console.log(`   - Presigned URL TTL: ${this.PRESIGNED_URL_TTL}s`);
+
   } catch (error) {
-    console.error('❌ Failed to load JWT secret from Secrets Manager:', error.message);
+    console.error('❌ Failed to load configurations:', error.message);
+
+    // Fallback to environment variables
+    console.log('⚠️  Using fallback configuration from environment variables');
     this.JWT_SECRET = process.env.JWT_SECRET || 'change_me';
-    console.log('⚠️  Using fallback JWT secret from environment');
+    this.MAX_UPLOAD_SIZE_MB = Number.parseInt(process.env.LIMIT_FILE_SIZE_MB || '512', 10);
+    this.PRESIGNED_URL_TTL = Number.parseInt(process.env.PRESIGNED_URL_TTL || '600', 10);
+
+    throw error;
   }
+};
+
+// Legacy method for backward compatibility
+config.initializeSecrets = async function () {
+  console.warn('⚠️  initializeSecrets() is deprecated. Use initialize() instead.');
+  await this.initialize();
 };
 
 config.CLIENT_ORIGIN = config.CLIENT_ORIGINS[0];

@@ -55,17 +55,18 @@ app.use(errorHandler);
 const start = async () => {
   console.log('🚀 Starting server...');
 
-  // Initialize AWS Secrets Manager secrets
-  console.log('🔐 Loading secrets from AWS Secrets Manager...');
-  await config.initializeSecrets();
+  // Initialize all configurations (Parameter Store + Secrets Manager)
+  console.log('� Loading configuration from AWS Parameter Store and Secrets Manager...');
+  await config.initialize();
 
   await ensureStorageDirs();
   await initDb();
 
   app.listen(config.PORT, '0.0.0.0', () => {
     console.log(`Server listening on http://0.0.0.0:${config.PORT}`);
-    console.log(`Available at: http://n11817143-videoapp.cab432.com`);
+    console.log(`Available at: ${config.DOMAIN_NAME || 'http://n11817143-videoapp.cab432.com'}`);
     console.log(`JWT Secret loaded: ${config.JWT_SECRET ? '✅ From Secrets Manager' : '⚠️  Fallback'}`);
+    console.log(`Configuration loaded: ${config.S3_BUCKET ? '✅ From Parameter Store' : '⚠️  Fallback'}`);
   });
 };
 
