@@ -2,6 +2,7 @@ import sqlite3 from 'sqlite3';
 import { open } from 'sqlite';
 import fs from 'fs/promises';
 import path from 'path';
+import { randomUUID } from 'crypto';
 import config from './config.js';
 
 sqlite3.verbose();
@@ -28,6 +29,7 @@ export async function initDb () {
   await db.exec(`
     CREATE TABLE IF NOT EXISTS videos (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
+      videoUid TEXT,
       userId INTEGER NOT NULL,
       originalName TEXT NOT NULL,
       storedFilename TEXT NOT NULL,
@@ -44,6 +46,18 @@ export async function initDb () {
       FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
     );
   `);
+
+  const columns = await db.all("PRAGMA table_info(videos);");
+  const hasVideoUid = columns.some((column) => column.name === 'videoUid');
+  if (!hasVideoUid) {
+    await db.exec('ALTER TABLE videos ADD COLUMN videoUid TEXT;');
+  }
+  await db.exec('CREATE UNIQUE INDEX IF NOT EXISTS videos_videoUid_idx ON videos(videoUid);');
+
+  const rowsNeedingUid = await db.all('SELECT id FROM videos WHERE videoUid IS NULL OR videoUid = "";');
+  for (const row of rowsNeedingUid) {
+    await db.run('UPDATE videos SET videoUid = ? WHERE id = ?', randomUUID(), row.id);
+  }
 }
 
 if (process.argv.includes('--init')) {
