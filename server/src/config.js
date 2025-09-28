@@ -33,10 +33,9 @@ const config = {
   PORT: Number.parseInt(process.env.PORT || '8080', 10),
   JWT_SECRET: null, // Will be loaded from Secrets Manager
   TOKEN_EXPIRY: process.env.TOKEN_EXPIRY || '1h',
-  DB_FILE: resolveFromRoot(process.env.DB_FILE || './data.sqlite'),
   PUBLIC_DIR: resolveFromRoot(process.env.PUBLIC_DIR || './src/public'),
   CLIENT_ORIGINS: parsedOrigins,
-  USE_LOCAL_STORAGE: process.env.USE_LOCAL_STORAGE === 'true',
+  USE_LOCAL_STORAGE: false, // Force S3 storage only
 
   // Parameter Store configurations (will be loaded)
   COGNITO_CLIENT_ID: null,
@@ -54,6 +53,15 @@ const config = {
   // Legacy compatibility
   get LIMIT_FILE_SIZE_MB() {
     return this.MAX_UPLOAD_SIZE_MB || Number.parseInt(process.env.LIMIT_FILE_SIZE_MB || '512', 10);
+  },
+
+  // Computed properties for backward compatibility (only used for temp files during transcoding)
+  get PUBLIC_VIDEOS_DIR() {
+    return path.join(this.PUBLIC_DIR, 'videos');
+  },
+
+  get PUBLIC_THUMBS_DIR() {
+    return path.join(this.PUBLIC_DIR, 'thumbs');
   }
 };
 
@@ -98,8 +106,5 @@ config.initializeSecrets = async function () {
 };
 
 config.CLIENT_ORIGIN = config.CLIENT_ORIGINS[0];
-
-config.PUBLIC_VIDEOS_DIR = path.join(config.PUBLIC_DIR, 'videos');
-config.PUBLIC_THUMBS_DIR = path.join(config.PUBLIC_DIR, 'thumbs');
 
 export default config;

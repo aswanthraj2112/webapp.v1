@@ -3,21 +3,43 @@ import NavBar from './components/NavBar.jsx';
 import Login from './pages/Login.jsx';
 import Dashboard from './pages/Dashboard.jsx';
 import api from './api.js';
+import { configureCognito } from './cognito.config.js';
 
-export const ToastContext = createContext(() => {});
+export const ToastContext = createContext(() => { });
 
 export const useToast = () => React.useContext(ToastContext);
 
-function App () {
+function App() {
   const [token, setToken] = useState(() => window.localStorage.getItem('jwt') || '');
   const [user, setUser] = useState(null);
   const [loadingUser, setLoadingUser] = useState(Boolean(token));
   const [toast, setToast] = useState(null);
+  const [cognitoReady, setCognitoReady] = useState(false);
 
   const notify = useCallback((message, type = 'info') => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 4000);
   }, []);
+
+  // Initialize Cognito configuration
+  useEffect(() => {
+    const initializeCognito = async () => {
+      try {
+        const config = await api.getConfig();
+        const success = await configureCognito(config.cognito);
+        setCognitoReady(success);
+        if (!success) {
+          notify('Authentication service unavailable', 'error');
+        }
+      } catch (error) {
+        console.error('Failed to initialize Cognito:', error);
+        notify('Authentication service unavailable', 'error');
+        setCognitoReady(false);
+      }
+    };
+
+    initializeCognito();
+  }, [notify]);
 
   useEffect(() => {
     let cancelled = false;
@@ -72,7 +94,12 @@ function App () {
       <div className="app">
         <NavBar user={user} onLogout={handleLogout} />
         <main className="container">
-          {token && user ? (
+          {!cognitoReady ? (
+            <div className="auth-card">
+              <h2>Initializing...</h2>
+              <p>Setting up authentication service...</p>
+            </div>
+          ) : token && user ? (
             <Dashboard token={token} user={user} />
           ) : (
             <Login onAuthenticated={handleAuthenticated} loading={loadingUser} />

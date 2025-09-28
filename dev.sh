@@ -22,8 +22,8 @@ fi
 
 # Start development servers
 echo "🚀 Starting development servers..."
-echo "Frontend will be available at: http://localhost:3000"
-echo "Backend will be available at: http://localhost:8080"
+echo "Frontend will be available at: http://n11817143-videoapp.cab432.com:3000"
+echo "Backend will be available at: http://n11817143-videoapp.cab432.com:8080"
 echo ""
 echo "Press Ctrl+C to stop all servers"
 

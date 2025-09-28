@@ -64,10 +64,18 @@ async function request(path, { method = 'GET', token, body, headers = {} } = {})
 }
 
 const api = {
-  register: (username, password) =>
-    request('/api/auth/register', { method: 'POST', body: { username, password } }),
+  // Configuration
+  getConfig: () => request('/api/config'),
+
+  // Authentication (will use Cognito)
+  register: (username, password, email) =>
+    request('/api/auth/register', { method: 'POST', body: { username, password, email } }),
   login: (username, password) =>
     request('/api/auth/login', { method: 'POST', body: { username, password } }),
+  confirmSignUp: (username, confirmationCode) =>
+    request('/api/auth/confirm', { method: 'POST', body: { username, confirmationCode } }),
+  resendConfirmationCode: (username) =>
+    request('/api/auth/resend', { method: 'POST', body: { username } }),
   getMe: (token) => request('/api/auth/me', { token }),
   uploadVideo: (token, file) => {
     const formData = new FormData();

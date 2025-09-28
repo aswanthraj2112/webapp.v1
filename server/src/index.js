@@ -2,7 +2,6 @@ import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
 import config from './config.js';
-import { initDb } from './db.js';
 import authRoutes from './auth/auth.routes.js';
 import videoRoutes from './videos/video.routes.js';
 import { errorHandler, NotFoundError } from './utils/errors.js';
@@ -43,6 +42,17 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
+app.get('/api/config', (req, res) => {
+  res.json({
+    cognito: {
+      userPoolId: config.COGNITO_USER_POOL_ID,
+      clientId: config.COGNITO_CLIENT_ID,
+      region: process.env.AWS_REGION || 'ap-southeast-2'
+    },
+    domain: config.DOMAIN_NAME
+  });
+});
+
 app.use('/api/auth', authRoutes);
 app.use('/api/videos', videoRoutes);
 
@@ -60,11 +70,10 @@ const start = async () => {
   await config.initialize();
 
   await ensureStorageDirs();
-  await initDb();
 
   app.listen(config.PORT, '0.0.0.0', () => {
-    console.log(`Server listening on http://0.0.0.0:${config.PORT}`);
-    console.log(`Available at: ${config.DOMAIN_NAME || 'http://n11817143-videoapp.cab432.com'}`);
+    console.log(`Server listening on port ${config.PORT}`);
+    console.log(`Available at: ${config.DOMAIN_NAME || 'http://n11817143-videoapp.cab432.com'}:${config.PORT}`);
     console.log(`JWT Secret loaded: ${config.JWT_SECRET ? '✅ From Secrets Manager' : '⚠️  Fallback'}`);
     console.log(`Configuration loaded: ${config.S3_BUCKET ? '✅ From Parameter Store' : '⚠️  Fallback'}`);
   });
