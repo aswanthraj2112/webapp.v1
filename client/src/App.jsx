@@ -21,7 +21,7 @@ function App() {
     setTimeout(() => setToast(null), 4000);
   }, []);
 
-  // Initialize Cognito configuration
+  // Initialize Cognito configuration (non-blocking for hybrid auth)
   useEffect(() => {
     const initializeCognito = async () => {
       try {
@@ -29,15 +29,18 @@ function App() {
         const success = await configureCognito(config.cognito);
         setCognitoReady(success);
         if (!success) {
-          notify('Authentication service unavailable', 'error');
+          console.warn('Cognito initialization failed - registration may not work');
         }
       } catch (error) {
         console.error('Failed to initialize Cognito:', error);
-        notify('Authentication service unavailable', 'error');
         setCognitoReady(false);
       }
     };
 
+    // Set cognitoReady to true immediately for hybrid auth (login works without Cognito)
+    setCognitoReady(true);
+
+    // Initialize Cognito in background for registration feature
     initializeCognito();
   }, [notify]);
 

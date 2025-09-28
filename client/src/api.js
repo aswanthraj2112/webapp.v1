@@ -1,4 +1,4 @@
-const RAW_API_URL = import.meta.env.VITE_API_URL || 'http://n11817143-videoapp.cab432.com:8080';
+const RAW_API_URL = import.meta.env.VITE_API_URL || 'https://n11817143-videoapp.cab432.com';
 
 function trimTrailingSlashes(value) {
   if (!value) return '';

@@ -43,14 +43,19 @@ app.get('/api/health', (req, res) => {
 });
 
 app.get('/api/config', (req, res) => {
-  res.json({
-    cognito: {
-      userPoolId: config.COGNITO_USER_POOL_ID,
-      clientId: config.COGNITO_CLIENT_ID,
-      region: process.env.AWS_REGION || 'ap-southeast-2'
-    },
-    domain: config.DOMAIN_NAME
-  });
+  try {
+    res.json({
+      cognito: {
+        userPoolId: config.COGNITO_USER_POOL_ID || process.env.COGNITO_USER_POOL_ID,
+        clientId: config.COGNITO_CLIENT_ID || process.env.COGNITO_CLIENT_ID,
+        region: process.env.AWS_REGION || 'ap-southeast-2'
+      },
+      domain: config.DOMAIN_NAME || process.env.DOMAIN_NAME || 'n11817143-videoapp.cab432.com'
+    });
+  } catch (error) {
+    console.error('Error in /api/config:', error);
+    res.status(500).json({ error: 'Failed to load configuration' });
+  }
 });
 
 app.use('/api/auth', authRoutes);

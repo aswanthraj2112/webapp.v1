@@ -5,7 +5,7 @@ services:
     ports: [ "8080:8080" ]
     environment:
       - AWS_REGION=ap-southeast-2
-      - CLIENT_ORIGINS=http://n11817143-videoapp.cab432.com:3000
+      - CLIENT_ORIGINS=https://n11817143-videoapp.cab432.com,http://n11817143-videoapp.cab432.com:3000
       - JWT_SECRET=change_me_in_production
       - USE_DYNAMO=true
       - USE_LOCAL_STORAGE=false
@@ -17,7 +17,7 @@ services:
     build: ./client
     ports: [ "3000:3000" ]
     environment:
-      - VITE_API_URL=http://n11817143-videoapp.cab432.com:8080/api
+      - VITE_API_URL=https://n11817143-videoapp.cab432.com/api
       - VITE_AWS_REGION=ap-southeast-2
     depends_on:
       - backend

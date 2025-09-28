@@ -5,7 +5,7 @@ import Uploader from '../components/Uploader.jsx';
 import VideoList from '../components/VideoList.jsx';
 import VideoPlayer from '../components/VideoPlayer.jsx';
 
-function Dashboard ({ token, user }) {
+function Dashboard({ token, user }) {
   const notify = useToast();
   const [videos, setVideos] = useState([]);
   const [page, setPage] = useState(1);
@@ -91,8 +91,8 @@ function Dashboard ({ token, user }) {
   return (
     <div className="dashboard">
       <section className="welcome">
-        <h1>Hello, {user.username}!</h1>
-        <p>Upload a video to generate thumbnails, kick off a 720p transcode, and stream directly from the browser.</p>
+        <h1>Hello, {user.username.toUpperCase()}!</h1>
+        <p>Upload a video to generate &720p kick off a conversions, and stream directly from the browser.</p>
       </section>
       <Uploader onUpload={handleUpload} uploading={uploading} />
       <VideoList
