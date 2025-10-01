@@ -1,61 +1,86 @@
 import {
-  ensureStorageDirs,
-  handleUpload,
-  listVideos,
-  getVideoByIdForUser,
-  getVideoStreamUrl,
-  getThumbnailUrl,
-  deleteVideo,
-  transcodeVideo
+  createPresignedUpload,
+  finalizeUploadedVideo,
+  fetchVideosForUser,
+  fetchVideoMetadata,
+  createStreamUrl,
+  removeVideoForUser
 } from './video.service.js';
-import { AppError } from '../utils/errors.js';
+import { cacheGet, cacheSet } from '../cache/cache.client.js';
+import config from '../config.js';
 
-export { ensureStorageDirs };
+const buildCacheKey = (userId, version, page, limit) => `videos:${userId}:v${version}:p${page}:l${limit}`;
+const versionKeyForUser = (userId) => `videos:${userId}:version`;
 
-export const uploadVideo = async (req, res) => {
-  const videoId = await handleUpload(req.user.id, req.file);
-  res.status(201).json({ videoId });
+async function getCacheVersion(userId) {
+  const versionKey = versionKeyForUser(userId);
+  let version = await cacheGet(versionKey);
+  if (!version) {
+    version = Date.now().toString();
+    await cacheSet(versionKey, version, 24 * 60 * 60);
+  }
+  return version;
+}
+
+async function invalidateUserCache(userId) {
+  const versionKey = versionKeyForUser(userId);
+  const newVersion = Date.now().toString();
+  await cacheSet(versionKey, newVersion, 24 * 60 * 60);
+}
+
+export const createUploadSession = async (req, res) => {
+  const { fileName, contentType } = req.validatedBody;
+  const session = await createPresignedUpload({
+    userId: req.user.sub,
+    fileName,
+    contentType
+  });
+  res.status(201).json(session);
+};
+
+export const finalizeUpload = async (req, res) => {
+  const payload = req.validatedBody;
+  await finalizeUploadedVideo({
+    ...payload,
+    userId: req.user.sub
+  });
+  await invalidateUserCache(req.user.sub);
+  res.status(201).json({ message: 'Upload finalized' });
 };
 
 export const listUserVideos = async (req, res) => {
   const page = Math.max(1, Number.parseInt(req.query.page || '1', 10));
   const rawLimit = Number.parseInt(req.query.limit || '10', 10);
   const limit = Math.min(Math.max(rawLimit || 10, 1), 50);
-  const { total, items } = await listVideos(req.user.id, page, limit);
-  res.json({ page, limit, total, items });
+  const version = await getCacheVersion(req.user.sub);
+  const cacheKey = buildCacheKey(req.user.sub, version, page, limit);
+  const cached = await cacheGet(cacheKey);
+  if (cached) {
+    return res.json({ ...cached, cached: true });
+  }
+  const data = await fetchVideosForUser({ userId: req.user.sub, page, limit });
+  await cacheSet(cacheKey, data, config.CACHE_TTL_SECONDS);
+  res.json({ ...data, cached: false });
 };
 
-export const getVideo = async (req, res) => {
-  const video = await getVideoByIdForUser(req.params.id, req.user.id);
+export const getVideoMetadata = async (req, res) => {
+  const video = await fetchVideoMetadata({ userId: req.user.sub, videoId: req.params.id });
   res.json({ video });
 };
 
-export const streamVideo = async (req, res) => {
+export const getVideoStream = async (req, res) => {
   const variant = req.query.variant === 'transcoded' ? 'transcoded' : 'original';
-  const download = req.query.download === '1' || req.query.download === 'true';
-  const video = await getVideoByIdForUser(req.params.id, req.user.id);
-  const url = await getVideoStreamUrl(video, variant, download);
-  res.redirect(url);
+  const url = await createStreamUrl({
+    userId: req.user.sub,
+    videoId: req.params.id,
+    variant,
+    download: req.query.download === '1' || req.query.download === 'true'
+  });
+  res.json({ url });
 };
 
-export const requestTranscode = async (req, res) => {
-  const preset = (req.validatedBody?.preset || '720p').toLowerCase();
-  if (preset !== '720p') {
-    throw new AppError('Unsupported preset', 400, 'UNSUPPORTED_PRESET');
-  }
-  const video = await getVideoByIdForUser(req.params.id, req.user.id);
-  await transcodeVideo(video, preset);
-  res.json({ message: 'Transcode started' });
-};
-
-export const serveThumbnail = async (req, res) => {
-  const video = await getVideoByIdForUser(req.params.id, req.user.id);
-  const url = await getThumbnailUrl(video);
-  res.redirect(url);
-};
-
-export const removeVideo = async (req, res) => {
-  const video = await getVideoByIdForUser(req.params.id, req.user.id);
-  await deleteVideo(video);
-  res.json({ message: 'Video deleted' });
+export const deleteVideo = async (req, res) => {
+  await removeVideoForUser({ userId: req.user.sub, videoId: req.params.id });
+  await invalidateUserCache(req.user.sub);
+  res.status(204).send();
 };

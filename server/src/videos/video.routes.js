@@ -1,63 +1,40 @@
 import express from 'express';
-import multer from 'multer';
-import path from 'path';
-import { randomUUID } from 'crypto';
 import { z } from 'zod';
-import config from '../config.js';
 import authMiddleware from '../auth/auth.middleware.js';
 import asyncHandler from '../utils/asyncHandler.js';
 import { validateBody } from '../utils/validate.js';
-import { AppError } from '../utils/errors.js';
 import {
-  uploadVideo,
+  createUploadSession,
+  finalizeUpload,
   listUserVideos,
-  getVideo,
-  streamVideo,
-  requestTranscode,
-  serveThumbnail,
-  removeVideo
+  getVideoMetadata,
+  getVideoStream,
+  deleteVideo
 } from './video.controller.js';
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, config.PUBLIC_VIDEOS_DIR);
-  },
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname) || '.mp4';
-    cb(null, `${Date.now()}-${randomUUID()}${ext}`);
-  }
-});
-
-const fileFilter = (req, file, cb) => {
-  if (file.mimetype && file.mimetype.startsWith('video/')) {
-    cb(null, true);
-  } else {
-    cb(new AppError('Only video files are allowed', 400, 'INVALID_FILE_TYPE'));
-  }
-};
-
-const upload = multer({
-  storage,
-  fileFilter,
-  limits: {
-    fileSize: config.LIMIT_FILE_SIZE_MB * 1024 * 1024
-  }
-});
-
-const transcodeSchema = z.object({
-  preset: z.string().optional()
-});
 
 const router = express.Router();
 
+const initiateSchema = z.object({
+  fileName: z.string().min(1),
+  contentType: z.string().min(1)
+});
+
+const finalizeSchema = z.object({
+  videoId: z.string().min(1),
+  originalName: z.string().min(1),
+  s3Key: z.string().min(1),
+  sizeBytes: z.number().int().nonnegative().optional(),
+  durationSeconds: z.number().nonnegative().optional(),
+  contentType: z.string().optional()
+});
+
 router.use(authMiddleware);
 
-router.post('/upload', upload.single('file'), asyncHandler(uploadVideo));
+router.post('/presign', validateBody(initiateSchema), asyncHandler(createUploadSession));
+router.post('/finalize', validateBody(finalizeSchema), asyncHandler(finalizeUpload));
 router.get('/', asyncHandler(listUserVideos));
-router.get('/:id', asyncHandler(getVideo));
-router.get('/:id/stream', asyncHandler(streamVideo));
-router.post('/:id/transcode', validateBody(transcodeSchema), asyncHandler(requestTranscode));
-router.get('/:id/thumbnail', asyncHandler(serveThumbnail));
-router.delete('/:id', asyncHandler(removeVideo));
+router.get('/:id', asyncHandler(getVideoMetadata));
+router.get('/:id/stream', asyncHandler(getVideoStream));
+router.delete('/:id', asyncHandler(deleteVideo));
 
 export default router;

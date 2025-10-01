@@ -28,6 +28,29 @@ body {
   border-bottom: 1px solid rgba(148, 163, 184, 0.2);
 }
 
+.navbar-nav {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.link {
+  background: none;
+  border: none;
+  color: #cbd5f5;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.5rem;
+  transition: background 0.2s ease;
+}
+
+.link.active,
+.link:hover {
+  background: rgba(59, 130, 246, 0.2);
+  color: white;
+}
+
 .navbar-brand {
   font-weight: 700;
   font-size: 1.2rem;
@@ -171,23 +194,6 @@ body {
   box-shadow: 0 16px 32px rgba(15, 23, 42, 0.2);
 }
 
-.thumb-wrapper {
-  position: relative;
-  width: 100%;
-  padding-top: 56.25%;
-  background: rgba(30, 41, 59, 0.8);
-  border-radius: 0.75rem;
-  overflow: hidden;
-}
-
-.thumb-wrapper img {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
 .video-info h3 {
   margin: 0 0 0.5rem 0;
   font-size: 1.05rem;
@@ -220,53 +226,26 @@ body {
   color: #f87171;
 }
 
-.player-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(15, 23, 42, 0.85);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 2rem;
-  z-index: 20;
-}
-
-.player {
+.video-player {
   background: rgba(15, 23, 42, 0.95);
   border-radius: 1rem;
-  width: min(960px, 100%);
-  box-shadow: 0 32px 80px rgba(15, 23, 42, 0.6);
-  padding: 1.5rem;
+  padding: 1.25rem;
+  box-shadow: 0 32px 64px rgba(15, 23, 42, 0.5);
+  margin-top: 2rem;
 }
 
-.player-header {
+.video-player-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 1rem;
 }
 
-.player-controls {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 1rem;
-}
-
-.player-controls select {
-  margin-left: 0.5rem;
-  padding: 0.4rem 0.6rem;
-  border-radius: 0.5rem;
-  border: 1px solid rgba(148, 163, 184, 0.3);
-  background: rgba(30, 41, 59, 0.8);
-  color: inherit;
-}
-
-.video-player {
+.video-player-element {
   width: 100%;
   border-radius: 0.75rem;
-  background: black;
   max-height: 70vh;
+  background: black;
 }
 
 .toast {
@@ -298,11 +277,28 @@ body {
     gap: 0.75rem;
     align-items: flex-start;
   }
-  .player {
-    padding: 1rem;
-  }
-  .player-controls {
-    flex-direction: column;
-    align-items: flex-start;
-  }
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+  background: rgba(15, 23, 42, 0.85);
+  border-radius: 1rem;
+  overflow: hidden;
+}
+
+.admin-table th,
+.admin-table td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.15);
+}
+
+.admin-table th {
+  text-align: left;
+  background: rgba(30, 41, 59, 0.7);
+}
+
+.admin-table tr:last-child td {
+  border-bottom: none;
 }
