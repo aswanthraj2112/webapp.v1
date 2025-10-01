@@ -24,7 +24,6 @@ const config = {
   DOMAIN_NAME: 'n11817143-videoapp.cab432.com',
   ROUTE53_DOMAIN: 'n11817143-videoapp.cab432.com',
   EC2_CNAME_TARGET: 'ec2-3-107-100-58.ap-southeast-2.compute.amazonaws.com',
-  PARAMETER_PREFIX: '/n11817143/app/',
 
   // Cognito configuration
   COGNITO_USER_POOL_ID: 'ap-southeast-2_CdVnmKfrW',
