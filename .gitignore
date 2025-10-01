@@ -1,0 +1,49 @@
+# Logs
+*.log
+logs/
+app.log
+frontend.log
+server.log
+
+# Dependencies
+node_modules/
+package-lock.json
+
+# Build outputs
+dist/
+build/
+
+# Environment files
+.env
+.env.local
+.env.production
+
+# Database
+*.sqlite
+*.db
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Archives
+*.tar
+*.zip
+*.gz
+
+# Docker
+.dockerignore
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Video uploads (temporary)
+server/src/public/videos/tmp/
