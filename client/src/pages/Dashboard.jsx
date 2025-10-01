@@ -1,74 +1,99 @@
 import React, { useEffect, useState } from 'react';
 import api from '../api.js';
-import { useToast } from '../App.jsx';
 import Uploader from '../components/Uploader.jsx';
 import VideoList from '../components/VideoList.jsx';
 import VideoPlayer from '../components/VideoPlayer.jsx';
 
-function Dashboard({ token, user }) {
-  const notify = useToast();
+async function getVideoDuration(file) {
+  return new Promise((resolve) => {
+    const element = document.createElement('video');
+    element.preload = 'metadata';
+    element.onloadedmetadata = () => {
+      const duration = element.duration;
+      URL.revokeObjectURL(element.src);
+      resolve(Number.isFinite(duration) ? duration : null);
+    };
+    element.onerror = () => {
+      URL.revokeObjectURL(element.src);
+      resolve(null);
+    };
+    element.src = URL.createObjectURL(file);
+  });
+}
+
+function Dashboard({ user, notify }) {
   const [videos, setVideos] = useState([]);
   const [page, setPage] = useState(1);
   const [limit] = useState(6);
   const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [selectedVideo, setSelectedVideo] = useState(null);
-  const [refreshIndex, setRefreshIndex] = useState(0);
+
+  const loadVideos = async (nextPage = page) => {
+    setLoading(true);
+    try {
+      const data = await api.listVideos(nextPage, limit);
+      setVideos(data.items);
+      setTotal(data.total);
+    } catch (error) {
+      notify(error.message || 'Failed to load videos', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
-    api
-      .listVideos(token, page, limit)
-      .then((data) => {
-        if (!cancelled) {
-          setVideos(data.items);
-          setTotal(data.total);
-        }
-      })
-      .catch((error) => {
-        if (!cancelled) {
-          notify(error.message, 'error');
-        }
-      })
-      .finally(() => {
-        if (!cancelled) {
-          setLoading(false);
-        }
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [token, page, limit, notify, refreshIndex]);
-
-  const triggerRefresh = () => setRefreshIndex((value) => value + 1);
+    loadVideos(page);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page]);
 
   const handleUpload = async (file) => {
     setUploading(true);
     try {
-      await api.uploadVideo(token, file);
+      const duration = await getVideoDuration(file);
+      const session = await api.initiateUpload({ fileName: file.name, contentType: file.type || 'application/octet-stream' });
+      await fetch(session.uploadUrl, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': file.type || 'application/octet-stream'
+        },
+        body: file
+      });
+      await api.finalizeUpload({
+        videoId: session.videoId,
+        originalName: file.name,
+        s3Key: session.s3Key,
+        sizeBytes: file.size,
+        durationSeconds: duration ?? undefined,
+        contentType: file.type || 'application/octet-stream'
+      });
       notify(`Uploaded ${file.name}`, 'success');
       setPage(1);
-      triggerRefresh();
+      await loadVideos(1);
     } catch (error) {
-      notify(error.message, 'error');
+      console.error(error);
+      notify(error.message || 'Upload failed', 'error');
     } finally {
       setUploading(false);
     }
   };
 
-  const handleSelect = (video) => {
-    setSelectedVideo(video);
+  const handleSelect = async (video) => {
+    try {
+      const streamUrl = await api.getStreamUrl(video.id);
+      setSelectedVideo({ ...video, streamUrl });
+    } catch (error) {
+      notify(error.message || 'Unable to generate stream URL', 'error');
+    }
   };
 
-  const handleTranscode = async (video) => {
+  const handleDownload = async (video) => {
     try {
-      await api.requestTranscode(token, video.id, '720p');
-      notify('Transcode started', 'info');
-      triggerRefresh();
+      const url = await api.getStreamUrl(video.id, { download: true });
+      window.open(url, '_blank');
     } catch (error) {
-      notify(error.message, 'error');
+      notify(error.message || 'Unable to download video', 'error');
     }
   };
 
@@ -77,38 +102,37 @@ function Dashboard({ token, user }) {
       return;
     }
     try {
-      await api.deleteVideo(token, video.id);
+      await api.deleteVideo(video.id);
       notify('Video deleted', 'info');
       if (selectedVideo?.id === video.id) {
         setSelectedVideo(null);
       }
-      triggerRefresh();
+      await loadVideos(page);
     } catch (error) {
-      notify(error.message, 'error');
+      notify(error.message || 'Failed to delete video', 'error');
     }
   };
 
   return (
     <div className="dashboard">
       <section className="welcome">
-        <h1>Hello, {user.username.toUpperCase()}!</h1>
-        <p>Upload a video to generate &720p kick off a conversions, and stream directly from the browser.</p>
+        <h1>Hello, {user.username}!</h1>
+        <p>Upload videos directly to Amazon S3 and stream them securely.</p>
       </section>
       <Uploader onUpload={handleUpload} uploading={uploading} />
       <VideoList
         videos={videos}
-        token={token}
         loading={loading}
         page={page}
         limit={limit}
         total={total}
-        onSelect={handleSelect}
-        onTranscode={handleTranscode}
-        onDelete={handleDelete}
         onPageChange={setPage}
+        onSelect={handleSelect}
+        onDownload={handleDownload}
+        onDelete={handleDelete}
       />
       {selectedVideo && (
-        <VideoPlayer video={selectedVideo} token={token} onClose={() => setSelectedVideo(null)} />
+        <VideoPlayer video={selectedVideo} onClose={() => setSelectedVideo(null)} />
       )}
     </div>
   );

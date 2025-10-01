@@ -40,32 +40,29 @@ export async function getSecret(secretName) {
     }
 }
 
+const SECRET_NAME = 'n11817143-a2-secret';
+
 /**
- * Retrieves the JWT secret from AWS Secrets Manager
- * @returns {Promise<string>} The JWT secret value
+ * Retrieves the Cognito app client secret from AWS Secrets Manager
+ * @returns {Promise<string|null>} The client secret or null if unavailable
  */
-export async function getJWTSecret() {
-    const secretName = 'n11817143-a2-secret';
-
+export async function getCognitoClientSecret() {
     try {
-        const secret = await getSecret(secretName);
+        const secret = await getSecret(SECRET_NAME);
 
-        // If it's a JSON object, extract JWT_SECRET key
-        if (typeof secret === 'object' && secret.JWT_SECRET) {
-            return secret.JWT_SECRET;
-        }
-
-        // If it's a plain string, return it directly
         if (typeof secret === 'string') {
             return secret;
         }
 
-        throw new Error('JWT_SECRET not found in secret');
+        if (typeof secret === 'object' && secret) {
+            return secret.cognitoClientSecret || secret.clientSecret || null;
+        }
+
+        return null;
     } catch (error) {
-        console.error('Failed to retrieve JWT secret from Secrets Manager:', error.message);
-        console.log('Falling back to environment variable or default');
-        return process.env.JWT_SECRET || 'change_me';
+        console.error('Failed to retrieve Cognito client secret:', error.message);
+        return process.env.COGNITO_CLIENT_SECRET || null;
     }
 }
 
-export default { getSecret, getJWTSecret };
+export default { getSecret, getCognitoClientSecret };

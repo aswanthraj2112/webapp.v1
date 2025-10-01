@@ -2,10 +2,7 @@ let repoPromise;
 
 async function loadRepo() {
   if (!repoPromise) {
-    const useDynamo = process.env.USE_DYNAMO === 'true';
-    repoPromise = useDynamo
-      ? import('./video.repo.dynamo.js')
-      : import('./video.repo.sqlite.js');
+    repoPromise = import('./video.repo.dynamo.js');
   }
   return repoPromise;
 }
