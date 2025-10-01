@@ -3,7 +3,22 @@ import { SSMClient, GetParameterCommand, GetParametersCommand } from '@aws-sdk/c
 const REGION = process.env.AWS_REGION || 'ap-southeast-2';
 const ssm = new SSMClient({ region: REGION });
 const paramCache = new Map();
-const PARAM_PREFIX = '/n11817143/app';
+const PARAM_PREFIX = '/n11817143/app/';
+
+const FALLBACK_CONFIG = {
+    REGION,
+    COGNITO_CLIENT_ID: process.env.COGNITO_CLIENT_ID || '',
+    COGNITO_USER_POOL_ID: 'ap-southeast-2_CdVnmKfrW',
+    DOMAIN_NAME: 'n11817143-videoapp.cab432.com',
+    DYNAMO_TABLE: 'n11817143-VideoApp',
+    DYNAMO_OWNER_INDEX: process.env.DYNAMO_OWNER_INDEX || 'ownerId-index',
+    MAX_UPLOAD_SIZE_MB: parseInt(process.env.MAX_UPLOAD_SIZE_MB || '512', 10),
+    PRESIGNED_URL_TTL: parseInt(process.env.PRESIGNED_URL_TTL || '900', 10),
+    S3_BUCKET: 'n11817143-a2',
+    S3_RAW_PREFIX: 'raw/',
+    S3_THUMBNAIL_PREFIX: 'thumbnails/',
+    S3_TRANSCODED_PREFIX: 'transcoded/'
+};
 
 /**
  * Get a single parameter from Parameter Store
@@ -12,7 +27,7 @@ const PARAM_PREFIX = '/n11817143/app';
  * @returns {Promise<string>} Parameter value
  */
 async function getParameter(name, useCache = true) {
-    const paramName = name.startsWith('/') ? name : `${PARAM_PREFIX}/${name}`;
+    const paramName = name.startsWith('/') ? name : `${PARAM_PREFIX}${name}`;
 
     if (useCache && paramCache.has(paramName)) {
         return paramCache.get(paramName);
@@ -62,7 +77,7 @@ async function getParameterWithDefault(name, defaultValue, useCache = true) {
  */
 async function getParameters(names) {
     const paramNames = names.map(name =>
-        name.startsWith('/') ? name : `${PARAM_PREFIX}/${name}`
+        name.startsWith('/') ? name : `${PARAM_PREFIX}${name}`
     );
 
     // Check cache first
@@ -153,17 +168,17 @@ async function loadAppConfig() {
 
         const config = {
             REGION,
-            COGNITO_CLIENT_ID: params.cognitoClientId,
-            COGNITO_USER_POOL_ID: params.cognitoUserPoolId,
-            DOMAIN_NAME: params.domainName,
-            DYNAMO_TABLE: params.dynamoTable,
-            DYNAMO_OWNER_INDEX: params.dynamoOwnerIndex,
-            MAX_UPLOAD_SIZE_MB: parseInt(params.maxUploadSizeMb || '512', 10),
-            PRESIGNED_URL_TTL: parseInt(params.preSignedUrlTTL || '600', 10),
-            S3_BUCKET: params.s3Bucket,
-            S3_RAW_PREFIX: params.s3_raw_prefix,
-            S3_THUMBNAIL_PREFIX: params.s3_thumbnail_prefix,
-            S3_TRANSCODED_PREFIX: params.s3_transcoded_prefix
+            COGNITO_CLIENT_ID: params.cognitoClientId || FALLBACK_CONFIG.COGNITO_CLIENT_ID,
+            COGNITO_USER_POOL_ID: params.cognitoUserPoolId || FALLBACK_CONFIG.COGNITO_USER_POOL_ID,
+            DOMAIN_NAME: params.domainName || FALLBACK_CONFIG.DOMAIN_NAME,
+            DYNAMO_TABLE: params.dynamoTable || FALLBACK_CONFIG.DYNAMO_TABLE,
+            DYNAMO_OWNER_INDEX: params.dynamoOwnerIndex || FALLBACK_CONFIG.DYNAMO_OWNER_INDEX,
+            MAX_UPLOAD_SIZE_MB: parseInt(params.maxUploadSizeMb || `${FALLBACK_CONFIG.MAX_UPLOAD_SIZE_MB}`, 10),
+            PRESIGNED_URL_TTL: parseInt(params.preSignedUrlTTL || `${FALLBACK_CONFIG.PRESIGNED_URL_TTL}`, 10),
+            S3_BUCKET: params.s3Bucket || FALLBACK_CONFIG.S3_BUCKET,
+            S3_RAW_PREFIX: params.s3_raw_prefix || FALLBACK_CONFIG.S3_RAW_PREFIX,
+            S3_THUMBNAIL_PREFIX: params.s3_thumbnail_prefix || FALLBACK_CONFIG.S3_THUMBNAIL_PREFIX,
+            S3_TRANSCODED_PREFIX: params.s3_transcoded_prefix || FALLBACK_CONFIG.S3_TRANSCODED_PREFIX
         };
 
         console.log('✅ Configuration loaded from Parameter Store');
@@ -172,7 +187,8 @@ async function loadAppConfig() {
         return config;
     } catch (error) {
         console.error('❌ Failed to load configuration from Parameter Store:', error.message);
-        throw error;
+        console.warn('Using fallback configuration for application parameters.');
+        return FALLBACK_CONFIG;
     }
 }
 
