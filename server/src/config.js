@@ -1,21 +1,9 @@
 import dotenv from 'dotenv';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import { getJWTSecret } from './utils/secrets.js';
 import { loadAppConfig } from './utils/parameterStore.js';
 
 dotenv.config();
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const rootDir = path.resolve(__dirname, '..');
-
-const resolveFromRoot = (maybeRelative) =>
-  path.isAbsolute(maybeRelative)
-    ? maybeRelative
-    : path.resolve(rootDir, maybeRelative);
-
-const defaultOrigin = 'http://n11817143-videoapp.cab432.com';
+const defaultOrigin = 'https://n11817143-videoapp.cab432.com';
 const rawOrigins = process.env.CLIENT_ORIGINS || process.env.CLIENT_ORIGIN;
 
 const parsedOrigins = rawOrigins
@@ -31,78 +19,61 @@ if (parsedOrigins.length === 0) {
 
 const config = {
   PORT: Number.parseInt(process.env.PORT || '8080', 10),
-  JWT_SECRET: null, // Will be loaded from Secrets Manager
-  TOKEN_EXPIRY: process.env.TOKEN_EXPIRY || '1h',
-  PUBLIC_DIR: resolveFromRoot(process.env.PUBLIC_DIR || './src/public'),
+  AWS_REGION: process.env.AWS_REGION || 'ap-southeast-2',
   CLIENT_ORIGINS: parsedOrigins,
-  USE_LOCAL_STORAGE: false, // Force S3 storage only
+  DOMAIN_NAME: 'n11817143-videoapp.cab432.com',
+  ROUTE53_DOMAIN: 'n11817143-videoapp.cab432.com',
+  EC2_CNAME_TARGET: 'ec2-3-107-100-58.ap-southeast-2.compute.amazonaws.com',
+  PARAMETER_PREFIX: '/n11817143/app/',
 
-  // Parameter Store configurations (will be loaded)
-  COGNITO_CLIENT_ID: null,
-  COGNITO_USER_POOL_ID: null,
-  DOMAIN_NAME: null,
-  DYNAMO_TABLE: null,
-  DYNAMO_OWNER_INDEX: null,
-  MAX_UPLOAD_SIZE_MB: null,
-  PRESIGNED_URL_TTL: null,
-  S3_BUCKET: null,
-  S3_RAW_PREFIX: null,
-  S3_THUMBNAIL_PREFIX: null,
-  S3_TRANSCODED_PREFIX: null,
+  // Cognito configuration
+  COGNITO_USER_POOL_ID: 'ap-southeast-2_CdVnmKfrW',
+  COGNITO_CLIENT_ID: process.env.COGNITO_CLIENT_ID || null,
 
-  // Legacy compatibility
-  get LIMIT_FILE_SIZE_MB() {
-    return this.MAX_UPLOAD_SIZE_MB || Number.parseInt(process.env.LIMIT_FILE_SIZE_MB || '512', 10);
-  },
+  // Storage & persistence
+  S3_BUCKET: 'n11817143-a2',
+  S3_RAW_PREFIX: 'raw/',
+  S3_TRANSCODED_PREFIX: 'transcoded/',
+  S3_THUMBNAIL_PREFIX: 'thumbnails/',
+  PRESIGNED_URL_TTL: Number.parseInt(process.env.PRESIGNED_URL_TTL || '900', 10),
+  MAX_UPLOAD_SIZE_MB: Number.parseInt(process.env.MAX_UPLOAD_SIZE_MB || '512', 10),
 
-  // Computed properties for backward compatibility (only used for temp files during transcoding)
-  get PUBLIC_VIDEOS_DIR() {
-    return path.join(this.PUBLIC_DIR, 'videos');
-  },
+  // Database
+  DYNAMO_TABLE: 'n11817143-VideoApp',
+  DYNAMO_OWNER_INDEX: process.env.DYNAMO_OWNER_INDEX || 'ownerId-index',
 
-  get PUBLIC_THUMBS_DIR() {
-    return path.join(this.PUBLIC_DIR, 'thumbs');
-  }
+  // Cache configuration
+  ELASTICACHE_ENDPOINT: process.env.ELASTICACHE_ENDPOINT || 'n11817143-a2-cache.cfg.apse2.cache.amazonaws.com:11211',
+  CACHE_TTL_SECONDS: Number.parseInt(process.env.CACHE_TTL_SECONDS || '60', 10),
+
+  // Authorization
+  ADMIN_GROUP: process.env.ADMIN_GROUP || 'admins'
 };
 
-// Initialize all configurations
 config.initialize = async function () {
   try {
-    // Load Parameter Store configuration
     const paramConfig = await loadAppConfig();
-    Object.assign(this, paramConfig);
 
-    // Load JWT secret from AWS Secrets Manager
-    this.JWT_SECRET = await getJWTSecret();
-    console.log('✅ JWT secret loaded from AWS Secrets Manager');
+    this.COGNITO_CLIENT_ID = paramConfig.COGNITO_CLIENT_ID || this.COGNITO_CLIENT_ID;
+    this.DYNAMO_TABLE = paramConfig.DYNAMO_TABLE || this.DYNAMO_TABLE;
+    this.DYNAMO_OWNER_INDEX = paramConfig.DYNAMO_OWNER_INDEX || this.DYNAMO_OWNER_INDEX;
+    this.S3_BUCKET = paramConfig.S3_BUCKET || this.S3_BUCKET;
+    this.S3_RAW_PREFIX = paramConfig.S3_RAW_PREFIX || this.S3_RAW_PREFIX;
+    this.S3_TRANSCODED_PREFIX = paramConfig.S3_TRANSCODED_PREFIX || this.S3_TRANSCODED_PREFIX;
+    this.S3_THUMBNAIL_PREFIX = paramConfig.S3_THUMBNAIL_PREFIX || this.S3_THUMBNAIL_PREFIX;
+    this.PRESIGNED_URL_TTL = paramConfig.PRESIGNED_URL_TTL || this.PRESIGNED_URL_TTL;
+    this.MAX_UPLOAD_SIZE_MB = paramConfig.MAX_UPLOAD_SIZE_MB || this.MAX_UPLOAD_SIZE_MB;
+    this.DOMAIN_NAME = paramConfig.DOMAIN_NAME || this.DOMAIN_NAME;
 
-    console.log('✅ All configurations loaded successfully');
-
-    // Log configuration summary (without sensitive data)
-    console.log('📋 Configuration Summary:');
-    console.log(`   - Domain: ${this.DOMAIN_NAME}`);
-    console.log(`   - S3 Bucket: ${this.S3_BUCKET}`);
-    console.log(`   - DynamoDB Table: ${this.DYNAMO_TABLE}`);
-    console.log(`   - Max Upload Size: ${this.MAX_UPLOAD_SIZE_MB}MB`);
-    console.log(`   - Presigned URL TTL: ${this.PRESIGNED_URL_TTL}s`);
-
+    console.log('✅ Configuration loaded');
+    console.log(`   Cognito User Pool: ${this.COGNITO_USER_POOL_ID}`);
+    console.log(`   Cognito Client ID: ${this.COGNITO_CLIENT_ID || 'not set'}`);
+    console.log(`   S3 Bucket: ${this.S3_BUCKET}`);
+    console.log(`   DynamoDB Table: ${this.DYNAMO_TABLE}`);
+    console.log(`   Cache endpoint: ${this.ELASTICACHE_ENDPOINT}`);
   } catch (error) {
-    console.error('❌ Failed to load configurations:', error.message);
-
-    // Fallback to environment variables
-    console.log('⚠️  Using fallback configuration from environment variables');
-    this.JWT_SECRET = process.env.JWT_SECRET || 'change_me';
-    this.MAX_UPLOAD_SIZE_MB = Number.parseInt(process.env.LIMIT_FILE_SIZE_MB || '512', 10);
-    this.PRESIGNED_URL_TTL = Number.parseInt(process.env.PRESIGNED_URL_TTL || '600', 10);
-
-    throw error;
+    console.warn('⚠️  Failed to load configuration from Parameter Store. Using defaults.', error.message);
   }
-};
-
-// Legacy method for backward compatibility
-config.initializeSecrets = async function () {
-  console.warn('⚠️  initializeSecrets() is deprecated. Use initialize() instead.');
-  await this.initialize();
 };
 
 config.CLIENT_ORIGIN = config.CLIENT_ORIGINS[0];

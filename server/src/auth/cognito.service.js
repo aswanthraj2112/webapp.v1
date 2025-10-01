@@ -1,215 +1,204 @@
 import {
-    CognitoIdentityProviderClient,
-    SignUpCommand,
-    ConfirmSignUpCommand,
-    ResendConfirmationCodeCommand,
-    AdminInitiateAuthCommand,
-    AdminRespondToAuthChallengeCommand
+  CognitoIdentityProviderClient,
+  SignUpCommand,
+  ConfirmSignUpCommand,
+  ResendConfirmationCodeCommand,
+  InitiateAuthCommand,
+  RespondToAuthChallengeCommand,
+  AdminDeleteUserCommand,
+  ListUsersCommand
 } from '@aws-sdk/client-cognito-identity-provider';
 import crypto from 'crypto';
-import jwt from 'jsonwebtoken';
 import config from '../config.js';
+import { getCognitoClientSecret } from '../utils/secrets.js';
+
+const client = new CognitoIdentityProviderClient({ region: config.AWS_REGION });
+let cachedSecret;
+
+const requireClientId = () => {
+  if (!config.COGNITO_CLIENT_ID) {
+    throw new Error('Cognito client ID not configured');
+  }
+  return config.COGNITO_CLIENT_ID;
+};
+
+async function getClientSecret() {
+  if (cachedSecret === undefined) {
+    try {
+      const secret = await getCognitoClientSecret();
+      cachedSecret = typeof secret === 'string' ? secret : secret?.cognitoClientSecret;
+    } catch {
+      cachedSecret = null;
+    }
+  }
+  return cachedSecret;
+}
+
+async function buildSecretHash(username) {
+  const clientSecret = await getClientSecret();
+  if (!clientSecret) {
+    return undefined;
+  }
+  const message = `${username}${requireClientId()}`;
+  return crypto.createHmac('SHA256', clientSecret).update(message).digest('base64');
+}
+
+const mapTokens = (authResult) => ({
+  accessToken: authResult.AccessToken,
+  idToken: authResult.IdToken,
+  refreshToken: authResult.RefreshToken,
+  tokenType: authResult.TokenType,
+  expiresIn: authResult.ExpiresIn
+});
+
+function normalizeChallenge(response) {
+  return {
+    challenge: {
+      name: response.ChallengeName,
+      parameters: response.ChallengeParameters,
+      session: response.Session
+    }
+  };
+}
 
 class CognitoService {
-    constructor() {
-        this.client = new CognitoIdentityProviderClient({
-            region: process.env.AWS_REGION || 'ap-southeast-2'
-        });
+  async signUp(username, password, email) {
+    const secretHash = await buildSecretHash(username);
+    const command = new SignUpCommand({
+      ClientId: requireClientId(),
+      Username: username,
+      Password: password,
+      SecretHash: secretHash,
+      UserAttributes: [
+        { Name: 'email', Value: email }
+      ]
+    });
+    const response = await client.send(command);
+    return {
+      userSub: response.UserSub,
+      username,
+      needsConfirmation: !response.UserConfirmed
+    };
+  }
+
+  async confirmSignUp(username, code) {
+    const secretHash = await buildSecretHash(username);
+    const command = new ConfirmSignUpCommand({
+      ClientId: requireClientId(),
+      Username: username,
+      ConfirmationCode: code,
+      SecretHash: secretHash
+    });
+    await client.send(command);
+  }
+
+  async resendConfirmationCode(username) {
+    const secretHash = await buildSecretHash(username);
+    const command = new ResendConfirmationCodeCommand({
+      ClientId: requireClientId(),
+      Username: username,
+      SecretHash: secretHash
+    });
+    await client.send(command);
+  }
+
+  async signIn(username, password) {
+    const secretHash = await buildSecretHash(username);
+    const command = new InitiateAuthCommand({
+      ClientId: requireClientId(),
+      AuthFlow: 'USER_PASSWORD_AUTH',
+      AuthParameters: {
+        USERNAME: username,
+        PASSWORD: password,
+        ...(secretHash ? { SECRET_HASH: secretHash } : {})
+      }
+    });
+
+    const response = await client.send(command);
+
+    if (response.ChallengeName) {
+      return normalizeChallenge(response);
     }
 
-    /**
-     * Generate secret hash required for Cognito client authentication
-     */
-    generateSecretHash(username, clientId, clientSecret = null) {
-        if (!clientSecret) {
-            // If no client secret is configured, return undefined
-            return undefined;
-        }
-        const message = username + clientId;
-        return crypto.createHmac('SHA256', clientSecret).update(message).digest('base64');
+    if (!response.AuthenticationResult) {
+      throw new Error('Authentication failed');
     }
 
-    /**
-     * Register a new user with Cognito
-     */
-    async register(username, password, email) {
-        try {
-            const command = new SignUpCommand({
-                ClientId: config.COGNITO_CLIENT_ID,
-                Username: username,
-                Password: password,
-                UserAttributes: [
-                    {
-                        Name: 'email',
-                        Value: email || username // Use username as email if not provided
-                    }
-                ]
-                // No SecretHash needed for simplified client configuration
-            });
+    return { tokens: mapTokens(response.AuthenticationResult) };
+  }
 
-            const response = await this.client.send(command);
-            return {
-                userSub: response.UserSub,
-                username: username,
-                needsConfirmation: !response.UserConfirmed
-            };
-        } catch (error) {
-            console.error('Cognito registration error:', error);
-            throw new Error(this.handleCognitoError(error));
-        }
+  async respondToChallenge({ session, challengeName, challengeResponses }) {
+    const username = challengeResponses?.USERNAME || challengeResponses?.username;
+    const secretHash = username ? await buildSecretHash(username) : undefined;
+    const command = new RespondToAuthChallengeCommand({
+      ClientId: requireClientId(),
+      Session: session,
+      ChallengeName: challengeName,
+      ChallengeResponses: {
+        ...challengeResponses,
+        ...(secretHash ? { SECRET_HASH: secretHash } : {})
+      }
+    });
+
+    const response = await client.send(command);
+
+    if (response.ChallengeName) {
+      return normalizeChallenge(response);
     }
 
-    /**
-     * Authenticate user with Cognito using minimal AdminInitiateAuth flow
-     */
-    async login(username, password) {
-        try {
-            // Step 1: Initiate authentication
-            const initCommand = new AdminInitiateAuthCommand({
-                UserPoolId: config.COGNITO_USER_POOL_ID,
-                ClientId: config.COGNITO_CLIENT_ID,
-                AuthFlow: 'ADMIN_NO_SRP_AUTH',
-                AuthParameters: {
-                    USERNAME: username,
-                    PASSWORD: password
-                    // No SECRET_HASH needed for this client configuration
-                }
-            });
-
-            const response = await this.client.send(initCommand);
-
-            // Step 2: Handle immediate success or challenge
-            if (response.AuthenticationResult) {
-                // Success - got tokens immediately
-                const tokens = {
-                    accessToken: response.AuthenticationResult.AccessToken,
-                    idToken: response.AuthenticationResult.IdToken,
-                    refreshToken: response.AuthenticationResult.RefreshToken,
-                    tokenType: response.AuthenticationResult.TokenType,
-                    expiresIn: response.AuthenticationResult.ExpiresIn
-                };
-
-                // Parse user info from ID token
-                const userInfo = this.parseIdToken(tokens.idToken);
-                return { ...tokens, user: userInfo };
-
-            } else if (response.ChallengeName) {
-                // Step 3: Handle challenges if needed
-                return await this.handleAuthChallenge(response, username);
-            }
-
-            throw new Error('Unexpected authentication response');
-        } catch (error) {
-            console.error('Cognito login error:', error);
-            throw new Error(this.handleCognitoError(error));
-        }
+    if (!response.AuthenticationResult) {
+      throw new Error('Authentication challenge failed');
     }
 
-    /**
-     * Handle authentication challenges
-     */
-    async handleAuthChallenge(challengeResponse, username) {
-        const { ChallengeName, ChallengeParameters, Session } = challengeResponse;
+    return { tokens: mapTokens(response.AuthenticationResult) };
+  }
 
-        switch (ChallengeName) {
-            case 'NEW_PASSWORD_REQUIRED':
-                throw new Error('Password change required. Please update your password.');
-            case 'MFA_SETUP':
-                throw new Error('MFA setup required. Please configure multi-factor authentication.');
-            case 'SOFTWARE_TOKEN_MFA':
-                throw new Error('MFA code required. Please provide your authentication code.');
-            default:
-                throw new Error(`Unsupported challenge: ${ChallengeName}`);
-        }
+  async refreshTokens({ refreshToken, username }) {
+    const secretHash = await buildSecretHash(username);
+    const command = new InitiateAuthCommand({
+      ClientId: config.COGNITO_CLIENT_ID,
+      AuthFlow: 'REFRESH_TOKEN_AUTH',
+      AuthParameters: {
+        REFRESH_TOKEN: refreshToken,
+        USERNAME: username,
+        ...(secretHash ? { SECRET_HASH: secretHash } : {})
+      }
+    });
+
+    const response = await client.send(command);
+    if (!response.AuthenticationResult) {
+      throw new Error('Unable to refresh tokens');
     }
 
-    /**
-     * Parse user information from ID token
-     */
-    parseIdToken(idToken) {
-        try {
-            // Decode without verification since it comes from Cognito
-            const decoded = jwt.decode(idToken);
+    const tokens = mapTokens(response.AuthenticationResult);
+    return {
+      ...tokens,
+      refreshToken: tokens.refreshToken || refreshToken
+    };
+  }
 
-            return {
-                id: decoded.sub,
-                username: decoded['cognito:username'] || decoded.username,
-                email: decoded.email || null,
-                emailVerified: decoded.email_verified || false,
-                groups: decoded['cognito:groups'] || [],
-                // Include all Cognito attributes for flexibility
-                attributes: decoded
-            };
-        } catch (error) {
-            console.error('Failed to parse ID token:', error);
-            throw new Error('Invalid authentication token received');
-        }
-    }
+  async listUsers() {
+    const command = new ListUsersCommand({
+      UserPoolId: config.COGNITO_USER_POOL_ID
+    });
+    const { Users = [] } = await client.send(command);
+    return Users.map((user) => ({
+      username: user.Username,
+      status: user.UserStatus,
+      enabled: user.Enabled,
+      createdAt: user.UserCreateDate,
+      updatedAt: user.UserLastModifiedDate,
+      attributes: Object.fromEntries((user.Attributes || []).map(({ Name, Value }) => [Name, Value]))
+    }));
+  }
 
-    /**
-     * Confirm user registration with verification code
-     */
-    async confirmSignUp(username, confirmationCode) {
-        try {
-            const command = new ConfirmSignUpCommand({
-                ClientId: config.COGNITO_CLIENT_ID,
-                Username: username,
-                ConfirmationCode: confirmationCode
-                // No SecretHash needed for simplified client configuration
-            });
-
-            await this.client.send(command);
-            return { success: true };
-        } catch (error) {
-            console.error('Cognito confirmation error:', error);
-            throw new Error(this.handleCognitoError(error));
-        }
-    }
-
-    /**
-     * Resend confirmation code
-     */
-    async resendConfirmationCode(username) {
-        try {
-            const command = new ResendConfirmationCodeCommand({
-                ClientId: config.COGNITO_CLIENT_ID,
-                Username: username
-                // No SecretHash needed for simplified client configuration
-            });
-
-            await this.client.send(command);
-            return { success: true };
-        } catch (error) {
-            console.error('Cognito resend confirmation error:', error);
-            throw new Error(this.handleCognitoError(error));
-        }
-    }
-
-    /**
-     * Handle Cognito error messages
-     */
-    handleCognitoError(error) {
-        switch (error.name) {
-            case 'UserNotFoundException':
-                return 'User not found. Please check your username or register a new account.';
-            case 'NotAuthorizedException':
-                return 'Invalid username or password.';
-            case 'UserNotConfirmedException':
-                return 'Account not verified. Please check your email for verification code.';
-            case 'UsernameExistsException':
-                return 'Username already exists. Please choose a different username.';
-            case 'InvalidPasswordException':
-                return 'Password does not meet requirements.';
-            case 'CodeMismatchException':
-                return 'Invalid verification code.';
-            case 'ExpiredCodeException':
-                return 'Verification code has expired. Please request a new code.';
-            case 'TooManyRequestsException':
-                return 'Too many requests. Please try again later.';
-            default:
-                return error.message || 'Authentication service error.';
-        }
-    }
+  async deleteUser(username) {
+    const command = new AdminDeleteUserCommand({
+      UserPoolId: config.COGNITO_USER_POOL_ID,
+      Username: username
+    });
+    await client.send(command);
+  }
 }
 
 export default new CognitoService();

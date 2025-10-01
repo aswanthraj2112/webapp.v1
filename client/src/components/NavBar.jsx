@@ -1,9 +1,31 @@
 import React from 'react';
 
-function NavBar ({ user, onLogout }) {
+function NavBar({ user, canManageUsers, activePage, onNavigate, onLogout }) {
   return (
     <header className="navbar">
-      <div className="navbar-brand">Video Web App</div>
+      <div className="navbar-brand">Video Transcoder</div>
+      <nav className="navbar-nav">
+        {user && (
+          <>
+            <button
+              type="button"
+              className={`link ${activePage === 'dashboard' ? 'active' : ''}`}
+              onClick={() => onNavigate('dashboard')}
+            >
+              Dashboard
+            </button>
+            {canManageUsers && (
+              <button
+                type="button"
+                className={`link ${activePage === 'admin' ? 'active' : ''}`}
+                onClick={() => onNavigate('admin')}
+              >
+                Admin
+              </button>
+            )}
+          </>
+        )}
+      </nav>
       <div className="navbar-actions">
         {user ? (
           <>
@@ -11,7 +33,7 @@ function NavBar ({ user, onLogout }) {
               Signed in as <strong>{user.username}</strong>
             </span>
             <button type="button" className="btn" onClick={onLogout}>
-              Log out
+              Sign out
             </button>
           </>
         ) : (
