@@ -5,7 +5,7 @@ import config from './config.js';
 import authRoutes from './auth/auth.routes.js';
 import videoRoutes from './videos/video.routes.js';
 import { errorHandler, NotFoundError } from './utils/errors.js';
-import { ensureStorageDirs } from './videos/video.controller.js';
+import adminRoutes from './admin/admin.routes.js';
 
 const app = express();
 
@@ -43,23 +43,22 @@ app.get('/api/health', (req, res) => {
 });
 
 app.get('/api/config', (req, res) => {
-  try {
-    res.json({
-      cognito: {
-        userPoolId: config.COGNITO_USER_POOL_ID || process.env.COGNITO_USER_POOL_ID,
-        clientId: config.COGNITO_CLIENT_ID || process.env.COGNITO_CLIENT_ID,
-        region: process.env.AWS_REGION || 'ap-southeast-2'
-      },
-      domain: config.DOMAIN_NAME || process.env.DOMAIN_NAME || 'n11817143-videoapp.cab432.com'
-    });
-  } catch (error) {
-    console.error('Error in /api/config:', error);
-    res.status(500).json({ error: 'Failed to load configuration' });
-  }
+  res.json({
+    cognito: {
+      userPoolId: config.COGNITO_USER_POOL_ID,
+      clientId: config.COGNITO_CLIENT_ID,
+      region: config.AWS_REGION
+    },
+    domain: config.DOMAIN_NAME,
+    api: {
+      baseUrl: `/api`
+    }
+  });
 });
 
 app.use('/api/auth', authRoutes);
 app.use('/api/videos', videoRoutes);
+app.use('/api/admin', adminRoutes);
 
 app.use((req, res, next) => {
   next(new NotFoundError('Route not found'));
@@ -73,8 +72,6 @@ const start = async () => {
   // Initialize all configurations (Parameter Store + Secrets Manager)
   console.log('� Loading configuration from AWS Parameter Store and Secrets Manager...');
   await config.initialize();
-
-  await ensureStorageDirs();
 
   app.listen(config.PORT, '0.0.0.0', () => {
     console.log(`Server listening on port ${config.PORT}`);

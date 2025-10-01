@@ -1,138 +1,261 @@
 import React, { useState } from 'react';
-import api from '../api.js';
-import { useToast } from '../App.jsx';
+import { Auth } from 'aws-amplify';
 
-function Login({ onAuthenticated, loading }) {
-  const notify = useToast();
-  const [mode, setMode] = useState('login');
-  const [form, setForm] = useState({ username: '', password: '', email: '', confirmationCode: '' });
-  const [submitting, setSubmitting] = useState(false);
-  const [needsConfirmation, setNeedsConfirmation] = useState(false);
+function Login({ onAuthenticated, notify }) {
+  const [mode, setMode] = useState('signIn');
+  const [form, setForm] = useState({ username: '', password: '', email: '', code: '', newPassword: '' });
   const [pendingUsername, setPendingUsername] = useState('');
+  const [challengeUser, setChallengeUser] = useState(null);
+  const [challengeType, setChallengeType] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
 
   const handleChange = (event) => {
     setForm((previous) => ({ ...previous, [event.target.name]: event.target.value }));
   };
 
-  const handleSubmit = async (event) => {
+  const resetForm = () => {
+    setForm({ username: '', password: '', email: '', code: '', newPassword: '' });
+    setChallengeUser(null);
+    setChallengeType(null);
+  };
+
+  const handleSignIn = async (event) => {
     event.preventDefault();
-
-    if (needsConfirmation) {
-      return handleConfirmation();
-    }
-
     if (!form.username || !form.password) {
       notify('Username and password are required', 'error');
       return;
     }
-
-    if (mode === 'register' && !form.email) {
-      notify('Email is required for registration', 'error');
-      return;
-    }
-
     setSubmitting(true);
     try {
-      const username = form.username.trim();
-      const password = form.password;
-      const email = form.email.trim();
-
-      if (mode === 'register') {
-        const result = await api.register(username, password, email);
-        if (result.needsConfirmation) {
-          setNeedsConfirmation(true);
-          setPendingUsername(username);
-          setForm(prev => ({ ...prev, username: '', password: '', email: '' }));
-          notify('Registration successful! Please check your email for verification code.', 'success');
-          return;
+      const user = await Auth.signIn(form.username.trim(), form.password);
+      if (user.challengeName) {
+        setChallengeUser(user);
+        switch (user.challengeName) {
+          case 'SMS_MFA':
+          case 'SOFTWARE_TOKEN_MFA':
+          case 'CUSTOM_CHALLENGE':
+            setChallengeType('mfa');
+            notify('Enter the verification code to complete sign in.', 'info');
+            break;
+          case 'NEW_PASSWORD_REQUIRED':
+            setChallengeType('newPassword');
+            notify('A new password is required to continue.', 'info');
+            break;
+          case 'MFA_SETUP':
+            setChallengeType('setupMfa');
+            notify('Please set up MFA using the Cognito hosted UI.', 'warning');
+            break;
+          default:
+            notify(`Unsupported challenge: ${user.challengeName}`, 'error');
         }
-        notify('Registration successful. Logging you in…', 'success');
+        return;
       }
-
-      const { token, user } = await api.login(username, password);
-      onAuthenticated(token, user);
+      resetForm();
+      await onAuthenticated();
     } catch (error) {
-      notify(error.message, 'error');
+      notify(error.message || 'Unable to sign in', 'error');
     } finally {
       setSubmitting(false);
     }
   };
 
-  const handleConfirmation = async () => {
-    if (!form.confirmationCode || !pendingUsername) {
+  const handleSignUp = async (event) => {
+    event.preventDefault();
+    if (!form.username || !form.password || !form.email) {
+      notify('Username, password, and email are required', 'error');
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await Auth.signUp({
+        username: form.username.trim(),
+        password: form.password,
+        attributes: { email: form.email.trim() }
+      });
+      notify('Registration successful! Check your email for the verification code.', 'success');
+      setPendingUsername(form.username.trim());
+      setMode('confirm');
+      setForm((previous) => ({ ...previous, code: '' }));
+    } catch (error) {
+      notify(error.message || 'Unable to register', 'error');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleConfirm = async (event) => {
+    event.preventDefault();
+    if (!pendingUsername || !form.code) {
       notify('Verification code is required', 'error');
       return;
     }
-
     setSubmitting(true);
     try {
-      await api.confirmSignUp(pendingUsername, form.confirmationCode);
-      notify('Account verified successfully! You can now log in.', 'success');
-      setNeedsConfirmation(false);
-      setPendingUsername('');
-      setForm({ username: '', password: '', email: '', confirmationCode: '' });
-      setMode('login');
+      await Auth.confirmSignUp(pendingUsername, form.code.trim());
+      notify('Account verified. You can now sign in.', 'success');
+      setMode('signIn');
+      resetForm();
     } catch (error) {
-      notify(error.message, 'error');
+      notify(error.message || 'Unable to verify account', 'error');
     } finally {
       setSubmitting(false);
     }
   };
 
-  const handleResendCode = async () => {
+  const handleResend = async () => {
     if (!pendingUsername) return;
-
     setSubmitting(true);
     try {
-      await api.resendConfirmationCode(pendingUsername);
-      notify('Verification code sent!', 'success');
+      await Auth.resendSignUp(pendingUsername);
+      notify('Verification code resent.', 'success');
     } catch (error) {
-      notify(error.message, 'error');
+      notify(error.message || 'Unable to resend code', 'error');
     } finally {
       setSubmitting(false);
     }
   };
 
-  if (needsConfirmation) {
+  const handleSubmitMfa = async (event) => {
+    event.preventDefault();
+    if (!challengeUser || !form.code) {
+      notify('Enter the verification code to continue.', 'error');
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await Auth.confirmSignIn(challengeUser, form.code.trim(), challengeUser.challengeName);
+      resetForm();
+      await onAuthenticated();
+    } catch (error) {
+      notify(error.message || 'Verification failed', 'error');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleSubmitNewPassword = async (event) => {
+    event.preventDefault();
+    if (!challengeUser || !form.newPassword) {
+      notify('New password is required', 'error');
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await Auth.completeNewPassword(challengeUser, form.newPassword);
+      resetForm();
+      await onAuthenticated();
+    } catch (error) {
+      notify(error.message || 'Unable to update password', 'error');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (mode === 'confirm') {
     return (
       <div className="auth-card">
-        <h2>Verify Your Account</h2>
-        <p>Please enter the verification code sent to your email for user: <strong>{pendingUsername}</strong></p>
-        <form onSubmit={handleSubmit}>
-          <label htmlFor="confirmationCode">Verification Code</label>
+        <h2>Verify your account</h2>
+        <p>A code was sent to {pendingUsername}. Enter it below to activate your account.</p>
+        <form onSubmit={handleConfirm}>
+          <label htmlFor="code">Verification code</label>
           <input
-            id="confirmationCode"
-            name="confirmationCode"
+            id="code"
+            name="code"
             type="text"
-            placeholder="Enter 6-digit code"
-            value={form.confirmationCode}
+            value={form.code}
             onChange={handleChange}
-            disabled={submitting}
             maxLength={6}
+            disabled={submitting}
           />
-          <button type="submit" className="btn" disabled={submitting || !form.confirmationCode}>
-            {submitting ? 'Verifying…' : 'Verify Account'}
+          <button type="submit" className="btn" disabled={submitting || !form.code}>
+            {submitting ? 'Verifying…' : 'Confirm account'}
           </button>
         </form>
-        <button
-          type="button"
-          className="btn-link"
-          onClick={handleResendCode}
-          disabled={submitting}
-        >
-          Resend verification code
+        <div className="auth-actions">
+          <button type="button" className="btn-link" onClick={handleResend} disabled={submitting}>
+            Resend code
+          </button>
+          <button
+            type="button"
+            className="btn-link"
+            onClick={() => {
+              setMode('signIn');
+              setPendingUsername('');
+              resetForm();
+            }}
+            disabled={submitting}
+          >
+            Back to sign in
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (challengeType === 'mfa') {
+    return (
+      <div className="auth-card">
+        <h2>Multi-factor authentication</h2>
+        <form onSubmit={handleSubmitMfa}>
+          <label htmlFor="code">Verification code</label>
+          <input
+            id="code"
+            name="code"
+            type="text"
+            value={form.code}
+            onChange={handleChange}
+            disabled={submitting}
+          />
+          <button type="submit" className="btn" disabled={submitting || !form.code}>
+            {submitting ? 'Verifying…' : 'Verify'}
+          </button>
+        </form>
+        <button type="button" className="btn-link" onClick={() => setMode('signIn')} disabled={submitting}>
+          Cancel
         </button>
+      </div>
+    );
+  }
+
+  if (challengeType === 'newPassword') {
+    return (
+      <div className="auth-card">
+        <h2>Set a new password</h2>
+        <form onSubmit={handleSubmitNewPassword}>
+          <label htmlFor="newPassword">New password</label>
+          <input
+            id="newPassword"
+            name="newPassword"
+            type="password"
+            value={form.newPassword}
+            onChange={handleChange}
+            disabled={submitting}
+          />
+          <button type="submit" className="btn" disabled={submitting || !form.newPassword}>
+            {submitting ? 'Updating…' : 'Update password'}
+          </button>
+        </form>
+      </div>
+    );
+  }
+
+  if (challengeType === 'setupMfa') {
+    return (
+      <div className="auth-card">
+        <h2>Multi-factor setup required</h2>
+        <p>
+          Your account requires MFA configuration. Please complete the setup in the AWS Cognito hosted UI or
+          contact the administrator for assistance.
+        </p>
         <button
           type="button"
-          className="btn-link"
+          className="btn"
           onClick={() => {
-            setNeedsConfirmation(false);
-            setPendingUsername('');
-            setForm({ username: '', password: '', email: '', confirmationCode: '' });
+            setMode('signIn');
+            resetForm();
           }}
-          disabled={submitting}
         >
-          Back to login
+          Back to sign in
         </button>
       </div>
     );
@@ -140,9 +263,8 @@ function Login({ onAuthenticated, loading }) {
 
   return (
     <div className="auth-card">
-      <h2>{mode === 'login' ? 'Sign in' : 'Create an account'}</h2>
-      {loading && <p>Validating session…</p>}
-      <form onSubmit={handleSubmit}>
+      <h2>{mode === 'signIn' ? 'Sign in' : 'Create an account'}</h2>
+      <form onSubmit={mode === 'signIn' ? handleSignIn : handleSignUp}>
         <label htmlFor="username">Username</label>
         <input
           id="username"
@@ -151,9 +273,9 @@ function Login({ onAuthenticated, loading }) {
           autoComplete="username"
           value={form.username}
           onChange={handleChange}
-          disabled={submitting || loading}
+          disabled={submitting}
         />
-        {mode === 'register' && (
+        {mode === 'signUp' && (
           <>
             <label htmlFor="email">Email</label>
             <input
@@ -163,8 +285,7 @@ function Login({ onAuthenticated, loading }) {
               autoComplete="email"
               value={form.email}
               onChange={handleChange}
-              disabled={submitting || loading}
-              placeholder="your.email@example.com"
+              disabled={submitting}
             />
           </>
         )}
@@ -173,22 +294,25 @@ function Login({ onAuthenticated, loading }) {
           id="password"
           name="password"
           type="password"
-          autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+          autoComplete={mode === 'signIn' ? 'current-password' : 'new-password'}
           value={form.password}
           onChange={handleChange}
-          disabled={submitting || loading}
+          disabled={submitting}
         />
-        <button type="submit" className="btn" disabled={submitting || loading}>
-          {submitting ? 'Please wait…' : mode === 'login' ? 'Sign in' : 'Register'}
+        <button type="submit" className="btn" disabled={submitting}>
+          {submitting ? 'Please wait…' : mode === 'signIn' ? 'Sign in' : 'Register'}
         </button>
       </form>
       <button
         type="button"
         className="btn-link"
-        onClick={() => setMode((current) => (current === 'login' ? 'register' : 'login'))}
+        onClick={() => {
+          setMode(mode === 'signIn' ? 'signUp' : 'signIn');
+          resetForm();
+        }}
         disabled={submitting}
       >
-        {mode === 'login' ? 'Need an account? Register' : 'Already have an account? Sign in'}
+        {mode === 'signIn' ? 'Need an account? Register' : 'Already registered? Sign in'}
       </button>
     </div>
   );

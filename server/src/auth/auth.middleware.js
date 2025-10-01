@@ -1,28 +1,75 @@
+import { CognitoJwtVerifier } from 'aws-jwt-verify';
+import config from '../config.js';
 import { AuthenticationError } from '../utils/errors.js';
-import { verifyToken } from './jwt.js';
 
-const authMiddleware = (req, res, next) => {
-  const authHeader = req.headers.authorization;
-  let token = null;
+let accessTokenVerifier;
+let idTokenVerifier;
 
-  if (authHeader && authHeader.startsWith('Bearer ')) {
-    token = authHeader.slice(7);
-  } else if (req.query && req.query.token) {
-    token = req.query.token;
+const getAccessTokenVerifier = () => {
+  if (!accessTokenVerifier) {
+    accessTokenVerifier = CognitoJwtVerifier.create({
+      userPoolId: config.COGNITO_USER_POOL_ID,
+      tokenUse: 'access',
+      clientId: config.COGNITO_CLIENT_ID || undefined
+    });
   }
+  return accessTokenVerifier;
+};
+
+const getIdTokenVerifier = () => {
+  if (!idTokenVerifier) {
+    idTokenVerifier = CognitoJwtVerifier.create({
+      userPoolId: config.COGNITO_USER_POOL_ID,
+      tokenUse: 'id',
+      clientId: config.COGNITO_CLIENT_ID || undefined
+    });
+  }
+  return idTokenVerifier;
+};
+
+async function verifyWithFallback(token) {
+  try {
+    const payload = await getAccessTokenVerifier().verify(token);
+    return { ...payload, tokenUse: 'access' };
+  } catch (accessError) {
+    try {
+      const payload = await getIdTokenVerifier().verify(token);
+      return { ...payload, tokenUse: 'id' };
+    } catch {
+      throw accessError;
+    }
+  }
+}
+
+const authMiddleware = async (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  const token = authHeader?.startsWith('Bearer ')
+    ? authHeader.slice(7).trim()
+    : null;
 
   if (!token) {
     return next(new AuthenticationError('Missing authentication token'));
   }
 
   try {
-    const payload = verifyToken(token);
+    const claims = await verifyWithFallback(token);
+    const groups = Array.isArray(claims['cognito:groups'])
+      ? claims['cognito:groups']
+      : claims['cognito:groups']
+        ? [claims['cognito:groups']]
+        : [];
+
     req.user = {
-      id: payload.sub,
-      username: payload.username
+      sub: claims.sub,
+      username: claims.username || claims['cognito:username'],
+      email: claims.email,
+      groups,
+      tokenUse: claims.tokenUse,
+      raw: claims
     };
+
     return next();
-  } catch {
+  } catch (error) {
     return next(new AuthenticationError('Invalid or expired token'));
   }
 };
