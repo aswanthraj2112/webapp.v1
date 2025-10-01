@@ -31,7 +31,7 @@ variable "route53_zone_name" {
 variable "ec2_public_dns" {
   description = "Public DNS name of the EC2 instance for the CNAME"
   type        = string
-  default     = "ec2-3-107-100-58.ap-southeast-2.compute.amazonaws.com"
+  default     = "ec2-3-27-210-9.ap-southeast-2.compute.amazonaws.com"
 }
 
 variable "s3_bucket_name" {
